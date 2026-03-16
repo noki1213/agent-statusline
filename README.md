@@ -56,7 +56,7 @@ brew install jq
 ### 1. Clone / クローン
 
 ```bash
-git clone https://github.com/noki1213/agent-statusline.git
+git clone https://github.com/noki1213/claude-statusline.git
 cd claude-statusline
 chmod +x statusline-claude.sh
 ```
