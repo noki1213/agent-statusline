@@ -12,6 +12,8 @@ input=$(cat)
 GREEN=$'\e[38;2;51;165;165m'
 YELLOW=$'\e[38;2;244;201;128m'
 RED=$'\e[38;2;252;156;156m'
+BLUE=$'\e[38;2;74;143;191m'
+CYAN=$'\e[38;2;74;174;200m'
 GRAY=$'\e[38;2;74;88;92m'
 RESET=$'\e[0m'
 DIM=$'\e[2m'
@@ -70,12 +72,47 @@ fi
 # ---------- Git repo name and branch name ----------
 git_branch=""
 git_repo=""
+git_line_color="$GREEN"
+git_no_remote=false
+git_unpushed=0
 if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 	git_branch=$(git -C "$cwd" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null || true)
 	if [ -n "$git_branch" ]; then
 		# Use the git top-level directory name as the repo name
 		git_toplevel=$(git -C "$cwd" --no-optional-locks rev-parse --show-toplevel 2>/dev/null || true)
 		git_repo=$(basename "$git_toplevel")
+
+		# Inspect the git status and decide the color
+		# First check whether there are uncommitted changes (edits, deletions, staged files, etc.)
+		porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
+		has_uncommitted=$(echo "$porcelain" | grep -v '^??' | grep -c '[^ ]' 2>/dev/null || echo 0)
+		has_untracked=$(echo "$porcelain" | grep -c '^??' 2>/dev/null || echo 0)
+
+		if [ "$has_uncommitted" -gt 0 ]; then
+			# Uncommitted changes present → yellow
+			git_line_color="$YELLOW"
+		elif [ "$has_untracked" -gt 0 ]; then
+			# Only untracked files present → red
+			git_line_color="$RED"
+		else
+			# Check whether a remote is configured
+			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | grep -c '.' || echo 0)
+			if [ "$has_remote" -eq 0 ]; then
+				# No remote → mark it blue with a ↑✗
+				git_line_color="$BLUE"
+				git_no_remote=true
+			else
+				# Check whether there are unpushed commits
+				git_unpushed=$(git -C "$cwd" --no-optional-locks rev-list "@{u}..HEAD" --count 2>/dev/null || echo 0)
+				if [ "$git_unpushed" -gt 0 ]; then
+					# Unpushed commits present → blue
+					git_line_color="$BLUE"
+				else
+					# Fully clean state → green
+					git_line_color="$GREEN"
+				fi
+			fi
+		fi
 	fi
 fi
 
@@ -210,14 +247,20 @@ SEP="${GRAY} │ ${RESET}"
 ctx_color=$(color_for_pct "$ctx_pct_int")
 
 # Line 1: directory
-line1="${dir_name}"
+line1="${CYAN}󰉋 ${dir_name}${RESET}"
 
 # Line 2: git (only when inside a repo)
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
-	line2="git: ${git_repo} [${git_branch}]"
+	push_mark=""
+	if $git_no_remote; then
+		push_mark=" ↑✗"
+	elif [ "$git_unpushed" -gt 0 ]; then
+		push_mark=" ↑${git_unpushed}"
+	fi
+	line2="${git_line_color} ${git_repo} [${git_branch}]${push_mark}${RESET}"
 elif [ -n "$git_branch" ]; then
-	line2="git: [${git_branch}]"
+	line2="${git_line_color} [${git_branch}]${push_mark}${RESET}"
 fi
 
 # Line 3: model name + CTX
