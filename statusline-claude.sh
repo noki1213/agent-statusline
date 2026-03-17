@@ -97,7 +97,7 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 			git_line_color="$RED"
 		else
 			# Check whether a remote is configured
-			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | grep -c '.' || echo 0)
+			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
 			if [ "$has_remote" -eq 0 ]; then
 				# No remote → mark it blue with a ↑✗
 				git_line_color="$BLUE"
