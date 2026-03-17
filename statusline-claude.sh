@@ -90,17 +90,18 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 		git_repo=$(basename "$git_toplevel")
 
 		# Inspect the git status and decide the color
-		# First check whether there are uncommitted changes (edits, deletions, staged files, etc.)
 		porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
-		has_uncommitted=$(echo "$porcelain" | grep -v '^??' | grep -c '[^ ]' 2>/dev/null || echo 0)
-		has_untracked=$(echo "$porcelain" | grep -c '^??' 2>/dev/null || echo 0)
+		# Check for unstaged changes (new/modified/deleted) (2nd char is not a space)
+		has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
+		# Check for staged-but-uncommitted changes (1st char shows a change, 2nd char is a space)
+		has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
 
-		if [ "$has_uncommitted" -gt 0 ]; then
-			# Uncommitted changes present → yellow
-			git_line_color="$YELLOW"
-		elif [ "$has_untracked" -gt 0 ]; then
-			# Only untracked files present → red
+		if [ "$has_unstaged" -gt 0 ]; then
+			# Unstaged changes exist (needs git add) → red
 			git_line_color="$RED"
+		elif [ "$has_staged" -gt 0 ]; then
+			# Staged with git add but not yet committed → yellow
+			git_line_color="$YELLOW"
 		else
 			# Check whether a remote is configured
 			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
