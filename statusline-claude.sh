@@ -278,7 +278,7 @@ fi
 
 # ---------- Building line 1 ----------
 SEP="${GRAY} │ ${RESET}"
-ctx_color=$(color_for_pct "$ctx_pct_int")
+ctx_color=$WHITE
 
 # Line 1: directory
 line1="${WHITE}󰉋 ${dir_name}${RESET}"
