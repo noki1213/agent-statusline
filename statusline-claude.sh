@@ -114,8 +114,8 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 				# Check whether there are unpushed commits
 				git_unpushed=$(git -C "$cwd" --no-optional-locks rev-list "@{u}..HEAD" --count 2>/dev/null || echo 0)
 				git_behind=$(git -C "$cwd" --no-optional-locks rev-list "HEAD..@{u}" --count 2>/dev/null || echo 0)
-				if [ "$git_unpushed" -gt 0 ]; then
-					# Unpushed commits present → blue
+				if [ "$git_unpushed" -gt 0 ] || [ "$git_behind" -gt 0 ]; then
+					# Unpushed/unpulled commits exist → blue
 					git_line_color="$BLUE"
 				else
 					# Fully clean state → green
@@ -287,17 +287,18 @@ line1="${WHITE}󰉋 ${dir_name}${RESET}"
 # Line 2: git (only when inside a repo)
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
+	vis=$(~/.config/gh-visibility.sh "$git_toplevel")
 	push_mark=""
 	if $git_no_remote; then
-		push_mark=" ↑✗"
+		push_mark=""
 	else
 		[ "$git_unpushed" -gt 0 ] && push_mark="${push_mark} ↑${git_unpushed}"
 		[ "$git_behind" -gt 0 ] && push_mark="${push_mark} ↓${git_behind}"
 	fi
 	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then
-		line2="${git_line_color} ${git_repo} [${git_branch}]${push_mark}${RESET}"
+		line2="${git_line_color}${vis} ${git_repo} [${git_branch}]${push_mark}${RESET}"
 	else
-		line2="${git_line_color} ${git_repo} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
+		line2="${git_line_color}${vis} ${git_repo} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
 	fi
 elif [ -n "$git_branch" ]; then
 	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then
