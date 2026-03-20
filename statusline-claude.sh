@@ -4,7 +4,7 @@
 # Line 2: 5-hour rate-limit progress bar
 # Line 3: 7-day rate-limit progress bar
 #
-# Reference: https://github.com/loadbalance-sudachi-kun/claude-code-statusline
+# Use the official rate_limits field introduced in v2.1.80
 
 input=$(cat)
 
@@ -67,7 +67,11 @@ eval "$(echo "$input" | jq -r '
 	"used_pct=" + (.context_window.used_percentage // 0 | tostring),
 	"ctx_size=" + (.context_window.context_window_size // 0 | tostring),
 	"cwd=" + (.cwd // "" | @sh),
-	"cc_version=" + (.version // "0.0.0" | @sh)
+	"cc_version=" + (.version // "0.0.0" | @sh),
+	"five_hour_pct=" + (.rate_limits.five_hour.used_percentage // "" | tostring),
+	"five_hour_resets_at=" + (.rate_limits.five_hour.resets_at // "" | @sh),
+	"seven_day_pct=" + (.rate_limits.seven_day.used_percentage // "" | tostring),
+	"seven_day_resets_at=" + (.rate_limits.seven_day.resets_at // "" | @sh)
 ' 2>/dev/null)"
 
 # ---------- Current directory (full path, abbreviated with ~) ----------
@@ -126,99 +130,28 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 	fi
 fi
 
-# ---------- Rate limit info (fetched via a Haiku probe, with caching) ----------
-CACHE_FILE="/tmp/claude-usage-cache.json"
-CACHE_TTL=360
-FIVE_HOUR_UTIL=""
-FIVE_HOUR_RESET=""
-SEVEN_DAY_UTIL=""
-SEVEN_DAY_RESET=""
-
-fetch_usage() {
-	local token
-	token=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null || true)
-	[ -z "$token" ] && return 1
-
-	local access_token
-	if echo "$token" | jq -e . >/dev/null 2>&1; then
-		access_token=$(echo "$token" | jq -r '.claudeAiOauth.accessToken // empty' 2>/dev/null)
-	else
-		access_token="$token"
-	fi
-	[ -z "$access_token" ] && return 1
-
-	# Send a minimal request to Haiku to get the rate-limit headers
-	local full_response
-	full_response=$(curl -sD- --max-time 8 -o /dev/null \
-		-H "Authorization: Bearer ${access_token}" \
-		-H "Content-Type: application/json" \
-		-H "User-Agent: claude-code/${cc_version:-0.0.0}" \
-		-H "anthropic-beta: oauth-2025-04-20" \
-		-H "anthropic-version: 2023-06-01" \
-		-d '{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"h"}]}' \
-		"https://api.anthropic.com/v1/messages" 2>/dev/null || true)
-	local headers="$full_response"
-	[ -z "$headers" ] && return 1
-
-	# Extract the rate-limit headers
-	local h5_util h5_reset h7_util h7_reset
-	h5_util=$(echo "$headers" | grep -i 'anthropic-ratelimit-unified-5h-utilization' | tr -d '\r' | awk '{print $2}')
-	h5_reset=$(echo "$headers" | grep -i 'anthropic-ratelimit-unified-5h-reset' | tr -d '\r' | awk '{print $2}')
-	h7_util=$(echo "$headers" | grep -i 'anthropic-ratelimit-unified-7d-utilization' | tr -d '\r' | awk '{print $2}')
-	h7_reset=$(echo "$headers" | grep -i 'anthropic-ratelimit-unified-7d-reset' | tr -d '\r' | awk '{print $2}')
-
-	[ -z "$h5_util" ] && return 1
-
-	# Save it to the cache file
-	jq -n \
-		--arg h5u "$h5_util" --arg h5r "$h5_reset" \
-		--arg h7u "$h7_util" --arg h7r "$h7_reset" \
-		'{five_hour_util: $h5u, five_hour_reset: $h5r, seven_day_util: $h7u, seven_day_reset: $h7r}' \
-		> "$CACHE_FILE"
-	return 0
+# ---------- Rate-limit info (from the official rate_limits field) ----------
+# From v2.1.80 onward, the rate_limits field is included in stdin's JSON
+# resets_at is in ISO 8601 format (e.g. 2026-03-20T15:00:00Z), so convert it to epoch seconds
+iso_to_epoch() {
+	local iso="$1"
+	[ -z "$iso" ] && echo "0" && return
+	date -j -f "%Y-%m-%dT%H:%M:%SZ" "$iso" "+%s" 2>/dev/null || echo "0"
 }
 
-load_usage() {
-	local data="$1"
-	eval "$(echo "$data" | jq -r '
-		"FIVE_HOUR_UTIL=" + (.five_hour_util // empty),
-		"FIVE_HOUR_RESET=" + (.five_hour_reset // empty),
-		"SEVEN_DAY_UTIL=" + (.seven_day_util // empty),
-		"SEVEN_DAY_RESET=" + (.seven_day_reset // empty)
-	' 2>/dev/null)"
-}
-
-# Check whether the cache has expired
-USE_CACHE=false
-if [ -f "$CACHE_FILE" ]; then
-	cache_age=$(( $(date +%s) - $(stat -f '%m' "$CACHE_FILE" 2>/dev/null || echo 0) ))
-	if [ "$cache_age" -lt "$CACHE_TTL" ]; then
-		USE_CACHE=true
-	fi
+FIVE_HOUR_PCT=""
+FIVE_HOUR_RESET="0"
+if [ -n "$five_hour_pct" ] && [ "$five_hour_pct" != "null" ] && [ "$five_hour_pct" != "" ]; then
+	FIVE_HOUR_PCT=$(printf "%.0f" "$five_hour_pct" 2>/dev/null || echo "")
+	FIVE_HOUR_RESET=$(iso_to_epoch "$five_hour_resets_at")
 fi
 
-if $USE_CACHE; then
-	load_usage "$(cat "$CACHE_FILE")"
-else
-	if fetch_usage; then
-		load_usage "$(cat "$CACHE_FILE")"
-	elif [ -f "$CACHE_FILE" ]; then
-		load_usage "$(cat "$CACHE_FILE")"
-	fi
+SEVEN_DAY_PCT=""
+SEVEN_DAY_RESET="0"
+if [ -n "$seven_day_pct" ] && [ "$seven_day_pct" != "null" ] && [ "$seven_day_pct" != "" ]; then
+	SEVEN_DAY_PCT=$(printf "%.0f" "$seven_day_pct" 2>/dev/null || echo "")
+	SEVEN_DAY_RESET=$(iso_to_epoch "$seven_day_resets_at")
 fi
-
-# Convert the usage rate from a 0.0-1.0 fraction to a percentage
-to_pct() {
-	local val="$1"
-	if [ -z "$val" ] || [ "$val" = "null" ] || [ "$val" = "0" ]; then
-		echo ""
-		return
-	fi
-	awk "BEGIN{printf \"%.0f\", $val * 100}" 2>/dev/null || echo ""
-}
-
-FIVE_HOUR_PCT=$(to_pct "$FIVE_HOUR_UTIL")
-SEVEN_DAY_PCT=$(to_pct "$SEVEN_DAY_UTIL")
 
 # ---------- Calculate the ideal-position cell (worked back from the reset time) ----------
 # reset time - window width = start time; derive the elapsed fraction from the difference with the current time
