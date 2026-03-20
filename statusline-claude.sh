@@ -69,9 +69,9 @@ eval "$(echo "$input" | jq -r '
 	"cwd=" + (.cwd // "" | @sh),
 	"cc_version=" + (.version // "0.0.0" | @sh),
 	"five_hour_pct=" + (.rate_limits.five_hour.used_percentage // "" | tostring),
-	"five_hour_resets_at=" + (.rate_limits.five_hour.resets_at // "" | @sh),
+	"five_hour_resets_at=" + (.rate_limits.five_hour.resets_at // 0 | tostring),
 	"seven_day_pct=" + (.rate_limits.seven_day.used_percentage // "" | tostring),
-	"seven_day_resets_at=" + (.rate_limits.seven_day.resets_at // "" | @sh)
+	"seven_day_resets_at=" + (.rate_limits.seven_day.resets_at // 0 | tostring)
 ' 2>/dev/null)"
 
 # ---------- Current directory (full path, abbreviated with ~) ----------
@@ -132,25 +132,19 @@ fi
 
 # ---------- Rate-limit info (from the official rate_limits field) ----------
 # From v2.1.80 onward, the rate_limits field is included in stdin's JSON
-# resets_at is in ISO 8601 format (e.g. 2026-03-20T15:00:00Z), so convert it to epoch seconds
-iso_to_epoch() {
-	local iso="$1"
-	[ -z "$iso" ] && echo "0" && return
-	date -j -f "%Y-%m-%dT%H:%M:%SZ" "$iso" "+%s" 2>/dev/null || echo "0"
-}
-
+# resets_at arrives as-is, as epoch seconds (an integer)
 FIVE_HOUR_PCT=""
 FIVE_HOUR_RESET="0"
 if [ -n "$five_hour_pct" ] && [ "$five_hour_pct" != "null" ] && [ "$five_hour_pct" != "" ]; then
 	FIVE_HOUR_PCT=$(printf "%.0f" "$five_hour_pct" 2>/dev/null || echo "")
-	FIVE_HOUR_RESET=$(iso_to_epoch "$five_hour_resets_at")
+	FIVE_HOUR_RESET="$five_hour_resets_at"
 fi
 
 SEVEN_DAY_PCT=""
 SEVEN_DAY_RESET="0"
 if [ -n "$seven_day_pct" ] && [ "$seven_day_pct" != "null" ] && [ "$seven_day_pct" != "" ]; then
 	SEVEN_DAY_PCT=$(printf "%.0f" "$seven_day_pct" 2>/dev/null || echo "")
-	SEVEN_DAY_RESET=$(iso_to_epoch "$seven_day_resets_at")
+	SEVEN_DAY_RESET="$seven_day_resets_at"
 fi
 
 # ---------- Calculate the ideal-position cell (worked back from the reset time) ----------
