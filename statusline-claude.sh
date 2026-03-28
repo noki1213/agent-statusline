@@ -85,6 +85,7 @@ git_branch=""
 git_repo=""
 git_line_color="$GREEN"
 git_no_remote=false
+git_not_owned=false
 git_unpushed=0
 git_behind=0
 if [ -n "$cwd" ] && [ -d "$cwd" ]; then
@@ -94,24 +95,38 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 		git_toplevel=$(git -C "$cwd" --no-optional-locks rev-parse --show-toplevel 2>/dev/null || true)
 		git_repo=$(basename "$git_toplevel")
 
-		# Inspect the git status and decide the color
-		porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
-		# Check for unstaged changes (new/modified/deleted) (2nd char is not a space)
-		has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
-		# Check for staged-but-uncommitted changes (1st char shows a change, 2nd char is a space)
-		has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
+		# Check whether a remote is configured
+		has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
 
-		if [ "$has_unstaged" -gt 0 ]; then
-			# Unstaged changes exist (needs git add) → red
-			git_line_color="$RED"
-		elif [ "$has_staged" -gt 0 ]; then
-			# Staged with git add but not yet committed → yellow
-			git_line_color="$YELLOW"
-		else
-			# Check whether a remote is configured
-			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
-			if [ "$has_remote" -eq 0 ]; then
-				# No remote → mark it blue with a ↑✗
+		# Check whether this is someone else's repo (one that was just cloned)
+		if [ "$has_remote" -gt 0 ]; then
+			github_user=$(grep '^\s*user:' ~/.config/gh/hosts.yml 2>/dev/null | head -1 | awk '{print $2}')
+			if [ -n "$github_user" ]; then
+				remote_url=$(git -C "$cwd" --no-optional-locks remote get-url origin 2>/dev/null || true)
+				if [ -n "$remote_url" ] && ! echo "$remote_url" | grep -q "$github_user"; then
+					# Someone else's repo → no color, no ↑↓
+					git_not_owned=true
+					git_line_color=""
+				fi
+			fi
+		fi
+
+		if ! $git_not_owned; then
+			# Inspect the git status and decide the color
+			porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
+			# Check for unstaged changes (new/modified/deleted) (2nd char is not a space)
+			has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
+			# Check for staged-but-uncommitted changes (1st char shows a change, 2nd char is a space)
+			has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
+
+			if [ "$has_unstaged" -gt 0 ]; then
+				# Unstaged changes exist (needs git add) → red
+				git_line_color="$RED"
+			elif [ "$has_staged" -gt 0 ]; then
+				# Staged with git add but not yet committed → yellow
+				git_line_color="$YELLOW"
+			elif [ "$has_remote" -eq 0 ]; then
+				# No remote → blue
 				git_line_color="$BLUE"
 				git_no_remote=true
 			else
