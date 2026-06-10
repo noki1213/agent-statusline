@@ -229,7 +229,7 @@ line1="${WHITE}󰉋 ${dir_name}${RESET}"
 # Line 2: git (only when inside a repo)
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
-	vis=$(~/.config/gh-visibility.sh "$git_toplevel")
+	vis=$(~/bin/gh-visibility.sh "$git_toplevel")
 	push_mark=""
 	if $git_no_remote; then
 		push_mark=""
