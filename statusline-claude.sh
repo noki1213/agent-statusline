@@ -229,7 +229,7 @@ line1="${WHITE}󰉋 ${dir_name}${RESET}"
 # 2行目：git（リポジトリ内の場合のみ）
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
-	vis=$(~/.config/gh-visibility.sh "$git_toplevel")
+	vis=$(~/00_Home_Local/25_scripts/gh-visibility.sh "$git_toplevel")
 	push_mark=""
 	if $git_no_remote; then
 		push_mark=""
