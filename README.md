@@ -1,15 +1,13 @@
 # agent-statusline
 
-A custom status line script for [Claude Code](https://claude.ai/code) that displays context usage, rate limit progress bars, and git information.
+[English](#english) | [日本語](#japanese)
 
----
+<a name="english"></a>
+A custom status line script for [Claude Code](https://claude.ai/code) and Antigravity (Windsurf) that displays context usage, rate limit progress bars, and git information.
 
-Claude Code のカスタムステータスラインスクリプトです。コンテキスト使用率・レートリミットのプログレスバー・git 情報などを表示します。
+## Preview
 
----
-
-## Preview / プレビュー
-
+**For Claude Code (`statusline-claude.sh`)**
 ```
 ~/path/to/agent-statusline
 git: agent-statusline [main]
@@ -18,54 +16,58 @@ Claude Sonnet 4.6 │ CTX 12%
 7d  █░░░░░░░░░  8%
 ```
 
----
+**For Antigravity (`statusline-agy.sh`)**
+```
+~/path/to/agent-statusline
+git: agent-statusline [main]
+Ge 5h 8% (04h 41m) | Ge 7d 36.6% (5d 08h 33m) | Cl 5h 0% (04h 59m) | Cl 7d 57.5% (5d 09h 04m)
+```
 
-## What it shows / 表示内容
+## What it shows
 
-| Line | Content (EN) | 内容 (JP) |
-|------|-------------|-----------|
-| 1 | Current directory path | 現在のディレクトリパス |
-| 2 | Git repo name and branch (only inside a git repo) | git リポジトリ名とブランチ名（git リポジトリ内のみ） |
-| 3 | Model name \| Context usage % | モデル名 \| コンテキスト使用率 |
-| 4 | 5-hour rate limit progress bar | 5 時間レートリミットのプログレスバー |
-| 5 | 7-day rate limit progress bar | 7 日間レートリミットのプログレスバー |
+| Line | Content |
+|------|---------|
+| 1 | Current directory path |
+| 2 | Git repo name and branch (only inside a git repo) |
+| 3+ | Agent specific usage and rate limits |
 
 Colors change based on usage: green (< 50%) → yellow (50–79%) → red (≥ 80%)
 
-使用率に応じて色が変わります：緑（50% 未満）→ 黄（50〜79%）→ 赤（80% 以上）
-
----
-
-## Requirements / 必要なもの
+## Requirements
 
 - macOS
-- [Claude Code](https://claude.ai/code)
 - `jq`
 - `curl`
 - `bash`
 
-`jq` のインストール（未インストールの場合）:
+Install `jq` if you haven't:
 ```bash
 brew install jq
 ```
 
----
+## Setup
 
-## Setup / セットアップ
-
-### 1. Clone / クローン
+### 1. Clone
 
 ```bash
 git clone https://github.com/noki1213/agent-statusline.git
 cd agent-statusline
-chmod +x statusline-claude.sh
+chmod +x statusline-claude.sh statusline-agy.sh
 ```
 
-### 2. Configure Claude Code / Claude Code に設定する
+### 2. Configure Local Settings
 
-Add the following to `~/.claude/settings.json`:
+Create a `.env` file in the repository root to specify the path to your custom CLI tool (if necessary). This file is ignored by Git, keeping your local paths private.
 
-`~/.claude/settings.json` に以下を追加します：
+```bash
+echo 'AGY_USAGE_COMMAND="/path/to/your/cli"' > .env
+```
+
+### 3. Apply Settings to Agents
+
+#### For Claude Code
+
+Add the following to your `~/.claude/settings.json`:
 
 ```json
 {
@@ -76,31 +78,31 @@ Add the following to `~/.claude/settings.json`:
 }
 ```
 
-`/path/to/agent-statusline/` の部分は実際のパスに変更してください。
+Replace `/path/to/agent-statusline/` with your actual absolute path.
+
+#### For Antigravity
+
+Run the included setup script to automatically configure Antigravity:
+
+```bash
+./apply-agy-settings.sh
+```
+
+## Notes
+
+- Rate limit info is fetched and cached locally to avoid excessive API calls.
+- Credentials are read securely from the macOS keychain (or local CLI).
 
 ---
 
-## Notes / 備考
-
-- Rate limit info is fetched by sending a minimal request to the Anthropic API using the Claude Haiku model. Results are cached for 6 minutes to avoid excessive API calls.
-- レートリミット情報は Claude Haiku モデルへの最小リクエストで取得します。API 呼び出しを抑えるため、結果は 6 分間キャッシュされます。
-- Credentials are read from the macOS keychain (set up automatically by Claude Code).
-- 認証情報は macOS のキーチェーンから読み取ります（Claude Code が自動で設定）。
-
----
-
-## Reference / 参考
-
-- [loadbalance-sudachi-kun/claude-code-statusline](https://github.com/loadbalance-sudachi-kun/claude-code-statusline)
-
----
-
+<a name="japanese"></a>
 # 日本語ドキュメント
 
-Claude Code のカスタムステータスラインスクリプトです。コンテキスト使用率・レートリミットのプログレスバー・git 情報などを表示します。
+Claude Code および Antigravity 向けのカスタムステータスラインスクリプトです。コンテキスト使用率・レートリミットのプログレスバー・git 情報などを表示します。
 
 ## プレビュー
 
+**Claude Code の場合 (`statusline-claude.sh`)**
 ```
 ~/path/to/agent-statusline
 git: agent-statusline [main]
@@ -109,22 +111,26 @@ Claude Sonnet 4.6 │ CTX 12%
 7d  █░░░░░░░░░  8%
 ```
 
+**Antigravity の場合 (`statusline-agy.sh`)**
+```
+~/path/to/agent-statusline
+git: agent-statusline [main]
+Ge 5h 8% (04h 41m) | Ge 7d 36.6% (5d 08h 33m) | Cl 5h 0% (04h 59m) | Cl 7d 57.5% (5d 09h 04m)
+```
+
 ## 表示内容
 
 | 行 | 内容 |
 |----|------|
 | 1 | 現在のディレクトリパス |
 | 2 | git リポジトリ名とブランチ名（git リポジトリ内のみ） |
-| 3 | モデル名 \| コンテキスト使用率 |
-| 4 | 5 時間レートリミットのプログレスバー |
-| 5 | 7 日間レートリミットのプログレスバー |
+| 3行目以降 | 各エージェント固有の使用率・レートリミット情報 |
 
 使用率に応じて色が変わります：緑（50% 未満）→ 黄（50〜79%）→ 赤（80% 以上）
 
 ## 必要なもの
 
 - macOS
-- [Claude Code](https://claude.ai/code)
 - `jq`
 - `curl`
 - `bash`
@@ -141,10 +147,20 @@ brew install jq
 ```bash
 git clone https://github.com/noki1213/agent-statusline.git
 cd agent-statusline
-chmod +x statusline-claude.sh
+chmod +x statusline-claude.sh statusline-agy.sh
 ```
 
-### 2. Claude Code に設定する
+### 2. ローカル設定ファイルの作成
+
+必要に応じて、利用する CLI ツールのパスを指定するため、リポジトリの直下に `.env` ファイルを作成してください。このファイルは Git の追跡から外れるため、ローカルパスが外部に公開されることはありません。
+
+```bash
+echo 'AGY_USAGE_COMMAND="/path/to/your/cli"' > .env
+```
+
+### 3. 各エージェントへの設定適用
+
+#### Claude Code の場合
 
 `~/.claude/settings.json` に以下を追加します：
 
@@ -159,7 +175,15 @@ chmod +x statusline-claude.sh
 
 `/path/to/agent-statusline/` の部分は実際のパスに変更してください。
 
+#### Antigravity の場合
+
+同梱されているセットアップスクリプトを実行するだけで、自動で設定が反映されます：
+
+```bash
+./apply-agy-settings.sh
+```
+
 ## 備考
 
-- レートリミット情報は Claude Haiku モデルへの最小リクエストで取得します。API 呼び出しを抑えるため、結果は 6 分間キャッシュされます。
-- 認証情報は macOS のキーチェーンから読み取ります（Claude Code が自動で設定）。
+- レートリミット情報は最小限のリクエストで取得され、API 呼び出しを抑えるために一定時間キャッシュされます。
+- 認証情報やローカルパスは安全に管理（キーチェーンや `.env` を利用）される設計になっています。
