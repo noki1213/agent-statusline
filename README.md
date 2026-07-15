@@ -66,15 +66,7 @@ cd path/to/agent-statusline
 chmod +x statusline-claude.sh statusline-agy.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
-### 2. Configure Local Settings
-
-Create a `.env` file in the repository root to specify the path to your custom CLI tool (if necessary). This file is ignored by Git, keeping your local paths private.
-
-```bash
-echo 'AGY_USAGE_COMMAND="/path/to/your/cli"' > .env
-```
-
-### 3. Apply Settings to Agents
+### 2. Apply Settings to Agents
 
 #### For Claude Code
 
@@ -165,15 +157,7 @@ cd path/to/agent-statusline
 chmod +x statusline-claude.sh statusline-agy.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
-### 2. ローカル設定ファイルの作成
-
-必要に応じて、利用する CLI ツールのパスを指定するため、リポジトリの直下に `.env` ファイルを作成してください。このファイルは Git の追跡から外れるため、ローカルパスが外部に公開されることはありません。
-
-```bash
-echo 'AGY_USAGE_COMMAND="/path/to/your/cli"' > .env
-```
-
-### 3. 各エージェントへの設定適用
+### 2. 各エージェントへの設定適用
 
 #### Claude Code の場合
 
