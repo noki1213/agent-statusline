@@ -53,12 +53,17 @@ brew install jq
 
 ## Setup
 
-### 1. Clone
+### 1. Download
+
+Download the latest `Source code (zip)` from the [Releases](https://github.com/noki1213/agent-statusline/releases) page and extract it to your preferred location.
+
+*(For Git users: `git clone https://github.com/noki1213/agent-statusline.git`)*
+
+Open your terminal, navigate to the extracted folder, and make the scripts executable:
 
 ```bash
-git clone https://github.com/noki1213/agent-statusline.git
-cd agent-statusline
-chmod +x statusline-claude.sh statusline-agy.sh
+cd path/to/agent-statusline
+chmod +x statusline-claude.sh statusline-agy.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
 ### 2. Configure Local Settings
@@ -147,12 +152,17 @@ brew install jq
 
 ## セットアップ
 
-### 1. クローン
+### 1. ダウンロード
+
+[Releases ページ](https://github.com/noki1213/agent-statusline/releases) から最新の `Source code (zip)` をダウンロードし、好きな場所に解凍してください。
+
+*（Git を使う場合: `git clone https://github.com/noki1213/agent-statusline.git`）*
+
+ターミナルを開き、解凍したフォルダに移動して実行権限を付与します：
 
 ```bash
-git clone https://github.com/noki1213/agent-statusline.git
-cd agent-statusline
-chmod +x statusline-claude.sh statusline-agy.sh
+cd path/to/agent-statusline
+chmod +x statusline-claude.sh statusline-agy.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
 ### 2. ローカル設定ファイルの作成
