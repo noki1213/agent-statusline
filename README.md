@@ -70,18 +70,11 @@ echo 'AGY_USAGE_COMMAND="/path/to/your/cli"' > .env
 
 #### For Claude Code
 
-Add the following to your `~/.claude/settings.json`:
+Run the included setup script to automatically configure Claude Code:
 
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash /path/to/agent-statusline/statusline-claude.sh"
-  }
-}
+```bash
+./apply-claude-settings.sh
 ```
-
-Replace `/path/to/agent-statusline/` with your actual absolute path.
 
 #### For Antigravity
 
@@ -168,18 +161,11 @@ echo 'AGY_USAGE_COMMAND="/path/to/your/cli"' > .env
 
 #### Claude Code の場合
 
-`~/.claude/settings.json` に以下を追加します：
+同梱されているセットアップスクリプトを実行するだけで、自動で設定が反映されます：
 
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash /path/to/agent-statusline/statusline-claude.sh"
-  }
-}
+```bash
+./apply-claude-settings.sh
 ```
-
-`/path/to/agent-statusline/` の部分は実際のパスに変更してください。
 
 #### Antigravity の場合
 
