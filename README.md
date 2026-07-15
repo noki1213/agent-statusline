@@ -1,4 +1,4 @@
-# claude-statusline
+# agent-statusline
 
 A custom status line script for [Claude Code](https://claude.ai/code) that displays context usage, rate limit progress bars, and git information.
 
@@ -11,8 +11,8 @@ Claude Code のカスタムステータスラインスクリプトです。コ�
 ## Preview / プレビュー
 
 ```
-~/path/to/claude-statusline
-git: claude-statusline [main]
+~/path/to/agent-statusline
+git: agent-statusline [main]
 Claude Sonnet 4.6 │ CTX 12%
 5h  ███░░░░░░░  34%
 7d  █░░░░░░░░░  8%
@@ -56,8 +56,8 @@ brew install jq
 ### 1. Clone / クローン
 
 ```bash
-git clone https://github.com/noki1213/claude-statusline.git
-cd claude-statusline
+git clone https://github.com/noki1213/agent-statusline.git
+cd agent-statusline
 chmod +x statusline-claude.sh
 ```
 
@@ -71,12 +71,12 @@ Add the following to `~/.claude/settings.json`:
 {
   "statusLine": {
     "type": "command",
-    "command": "bash /path/to/claude-statusline/statusline-claude.sh"
+    "command": "bash /path/to/agent-statusline/statusline-claude.sh"
   }
 }
 ```
 
-`/path/to/claude-statusline/` の部分は実際のパスに変更してください。
+`/path/to/agent-statusline/` の部分は実際のパスに変更してください。
 
 ---
 
@@ -102,8 +102,8 @@ Claude Code のカスタムステータスラインスクリプトです。コ�
 ## プレビュー
 
 ```
-~/path/to/claude-statusline
-git: claude-statusline [main]
+~/path/to/agent-statusline
+git: agent-statusline [main]
 Claude Sonnet 4.6 │ CTX 12%
 5h  ███░░░░░░░  34%
 7d  █░░░░░░░░░  8%
@@ -139,8 +139,8 @@ brew install jq
 ### 1. クローン
 
 ```bash
-git clone https://github.com/noki1213/claude-statusline.git
-cd claude-statusline
+git clone https://github.com/noki1213/agent-statusline.git
+cd agent-statusline
 chmod +x statusline-claude.sh
 ```
 
@@ -152,12 +152,12 @@ chmod +x statusline-claude.sh
 {
   "statusLine": {
     "type": "command",
-    "command": "bash /path/to/claude-statusline/statusline-claude.sh"
+    "command": "bash /path/to/agent-statusline/statusline-claude.sh"
   }
 }
 ```
 
-`/path/to/claude-statusline/` の部分は実際のパスに変更してください。
+`/path/to/agent-statusline/` の部分は実際のパスに変更してください。
 
 ## 備考
 
