@@ -11,7 +11,7 @@ Claude Code のカスタムステータスラインスクリプトです。コ�
 ## Preview / プレビュー
 
 ```
-~/claude-statusline
+~/path/to/claude-statusline
 git: claude-statusline [main]
 Claude Sonnet 4.6 │ CTX 12%
 5h  ███░░░░░░░  34%
@@ -102,7 +102,7 @@ Claude Code のカスタムステータスラインスクリプトです。コ�
 ## プレビュー
 
 ```
-~/claude-statusline
+~/path/to/claude-statusline
 git: claude-statusline [main]
 Claude Sonnet 4.6 │ CTX 12%
 5h  ███░░░░░░░  34%

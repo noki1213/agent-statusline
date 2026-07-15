@@ -1,6 +1,11 @@
 #!/bin/bash
 # Antigravity CLI status line script (smart cache + primary/secondary two-tier display)
 
+# ---------- Load environment variables ----------
+if [ -f "$(dirname "$0")/.env" ]; then
+    source "$(dirname "$0")/.env"
+fi
+
 input=$(cat)
 
 # ---------- Get info from stdin ----------
@@ -293,7 +298,8 @@ line1="${WHITE}󰉋 ${dir_name}${RESET}"
 
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
-	vis=$(~/bin/gh-visibility.sh "$git_toplevel" 2>/dev/null || echo "")
+	GH_VIS_SCRIPT="${GH_VISIBILITY_SCRIPT:-gh-visibility.sh}"
+	vis=$("${GH_VIS_SCRIPT}" "$git_toplevel" 2>/dev/null || echo "")
 	push_mark=""
 	if ! $git_no_remote; then
 		[ "$git_unpushed" -gt 0 ] && push_mark="${push_mark} ↑${git_unpushed}"

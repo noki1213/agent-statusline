@@ -3,7 +3,7 @@ set -euo pipefail
 
 SETTINGS_DIR="$HOME/.gemini/antigravity-cli"
 SETTINGS_FILE="$SETTINGS_DIR/settings.json"
-SCRIPT_PATH="$HOME/claude-statusline/statusline-agy.sh"
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/statusline-agy.sh"
 
 # Create the directory if it doesn't exist
 mkdir -p "$SETTINGS_DIR"
