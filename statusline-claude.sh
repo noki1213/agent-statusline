@@ -229,7 +229,8 @@ line1="${WHITE}󰉋 ${dir_name}${RESET}"
 # 2行目：git（リポジトリ内の場合のみ）
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
-	vis=$(~/00_Home_Local/25_scripts/gh-visibility.sh "$git_toplevel" 2>/dev/null || echo "")
+	GH_VIS_SCRIPT="${GH_VISIBILITY_SCRIPT:-gh-visibility.sh}"
+	vis=$("${GH_VIS_SCRIPT}" "$git_toplevel" 2>/dev/null || echo "")
 	push_mark=""
 	if $git_no_remote; then
 		push_mark=""

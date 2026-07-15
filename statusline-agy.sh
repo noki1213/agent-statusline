@@ -1,6 +1,11 @@
 #!/bin/bash
 # Antigravity CLI ステータスライン表示スクリプト（スマートキャッシュ＆主副2段表示版）
 
+# ---------- 環境変数の読み込み ----------
+if [ -f "$(dirname "$0")/.env" ]; then
+    source "$(dirname "$0")/.env"
+fi
+
 input=$(cat)
 
 # ---------- stdin から情報を取得 ----------
@@ -293,7 +298,8 @@ line1="${WHITE}󰉋 ${dir_name}${RESET}"
 
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
-	vis=$(~/00_Home_Local/25_scripts/gh-visibility.sh "$git_toplevel" 2>/dev/null || echo "")
+	GH_VIS_SCRIPT="${GH_VISIBILITY_SCRIPT:-gh-visibility.sh}"
+	vis=$("${GH_VIS_SCRIPT}" "$git_toplevel" 2>/dev/null || echo "")
 	push_mark=""
 	if ! $git_no_remote; then
 		[ "$git_unpushed" -gt 0 ] && push_mark="${push_mark} ↑${git_unpushed}"
