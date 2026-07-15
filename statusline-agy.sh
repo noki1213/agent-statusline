@@ -320,8 +320,8 @@ fi
 
 # 3行目：モデル名 + CTX + Tasks/Subagents
 extras=""
-[ "$task_count" -gt 0 ] && extras="${SEP}⚙Tasks: ${task_count}"
-[ "$subagents" -gt 0 ] && extras="${extras}${SEP}🤖Subagents: ${subagents}"
+[ -n "$task_count" ] && [ "$task_count" -gt 0 ] && extras="${SEP}⚙Tasks: ${task_count}"
+[ -n "$subagents" ] && [ "$subagents" -gt 0 ] && extras="${extras}${SEP}🤖Subagents: ${subagents}"
 line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${extras}"
 
 # 4行目（メインモデル 5h）

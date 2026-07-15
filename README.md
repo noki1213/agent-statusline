@@ -20,7 +20,10 @@ Claude Sonnet 4.6 │ CTX 12%
 ```
 ~/path/to/agent-statusline
 git: agent-statusline [main]
-Ge 5h 8% (04h 41m) | Ge 7d 36.6% (5d 08h 33m) | Cl 5h 0% (04h 59m) | Cl 7d 57.5% (5d 09h 04m)
+Claude Sonnet 4.6 │ CTX 0%
+5h ┃░░░░░░░░░   9% →    04h 22m
+7d █┃██░░░░░░  37% → 5d 08h 14m
+↳ Claude/GPT: 5h ░░░░░   0% │ 7d ███░░  58%
 ```
 
 ## What it shows
@@ -115,7 +118,10 @@ Claude Sonnet 4.6 │ CTX 12%
 ```
 ~/path/to/agent-statusline
 git: agent-statusline [main]
-Ge 5h 8% (04h 41m) | Ge 7d 36.6% (5d 08h 33m) | Cl 5h 0% (04h 59m) | Cl 7d 57.5% (5d 09h 04m)
+Claude Sonnet 4.6 │ CTX 0%
+5h ┃░░░░░░░░░   9% →    04h 22m
+7d █┃██░░░░░░  37% → 5d 08h 14m
+↳ Claude/GPT: 5h ░░░░░   0% │ 7d ███░░  58%
 ```
 
 ## 表示内容
