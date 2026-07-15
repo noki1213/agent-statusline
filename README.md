@@ -12,8 +12,8 @@ A custom status line script for [Claude Code](https://claude.ai/code) and Antigr
 ~/path/to/agent-statusline
 git: agent-statusline [main]
 Claude Sonnet 4.6 │ CTX 12%
-5h  ███░░░░░░░  34%
-7d  █░░░░░░░░░  8%
+5h ┃██░░░░░░░░  24% →    03h 15m
+7d █┃██░░░░░░  37% → 5d 08h 14m
 ```
 
 **For Antigravity (`statusline-agy.sh`)**
@@ -103,8 +103,8 @@ Claude Code および Antigravity 向けのカスタムステータスライン�
 ~/path/to/agent-statusline
 git: agent-statusline [main]
 Claude Sonnet 4.6 │ CTX 12%
-5h  ███░░░░░░░  34%
-7d  █░░░░░░░░░  8%
+5h ┃██░░░░░░░░  24% →    03h 15m
+7d █┃██░░░░░░  37% → 5d 08h 14m
 ```
 
 **Antigravity の場合 (`statusline-agy.sh`)**
