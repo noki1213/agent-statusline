@@ -36,6 +36,9 @@ Claude Sonnet 4.6 │ CTX 0%
 
 Colors change based on usage: green (< 50%) → yellow (50–79%) → red (≥ 80%)
 
+**✨ Unique Feature: Ideal Progress Marker (`┃`)**
+The progress bar includes a vertical bar marker (`┃`) that indicates your "ideal" usage pace based on the time remaining until your rate limits reset. If your current usage bar stays behind this marker, you are using the AI at a safe and sustainable pace without hitting the limits!
+
 ## Requirements
 
 - macOS
@@ -126,6 +129,9 @@ Claude Sonnet 4.6 │ CTX 0%
 | 3行目以降 | 各エージェント固有の使用率・レートリミット情報 |
 
 使用率に応じて色が変わります：緑（50% 未満）→ 黄（50〜79%）→ 赤（80% 以上）
+
+**✨ ユニークな機能：理想進捗マーカー（`┃`）**
+プログレスバーの中にある縦棒（`┃`）は、リセット時刻までの残り時間から逆算した「理想の消費ペース」を示しています。現在の使用量がこのマーカーより左側に収まっていれば、制限に引っかかることなく安全なペースで使えているという画期的な目安になります！
 
 ## 必要なもの
 
