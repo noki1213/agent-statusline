@@ -197,6 +197,15 @@ if [ -n "$RESET_EPOCH" ] && [ "$RESET_EPOCH" != "0" ]; then
 	[ -n "$cd_time" ] && reset_display="→ ${cd_time}"
 fi
 
+# ---------- エポック秒からリセット日時の文字列を生成する ----------
+reset_datetime() {
+	local epoch="$1"
+	[ -z "$epoch" ] || [ "$epoch" = "0" ] && echo "" && return
+	local dt
+	dt=$(date -r "$epoch" +'%m/%d %a %H:%M')
+	printf '(%s)' "$dt"
+}
+
 # ---------- 理想位置の計算 (月間制限=約30日=2592000秒として概算) ----------
 ideal_bar_pos() {
 	local reset_epoch="$1"
@@ -261,7 +270,10 @@ if [ -n "$PREMIUM_USED_PCT" ]; then
     
 	# Claude/Agy と見た目を完全に統一するため、プレフィックスを「30d」にする
 	line4="${c}30d ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
-	[ -n "$reset_display" ] && line4+=" ${reset_display}"
+	if [ -n "$reset_display" ]; then
+		dt_str=$(reset_datetime "$RESET_EPOCH")
+		line4+=" ${reset_display} ${dt_str}"
+	fi
 fi
 
 # ---------- 出力 ----------
