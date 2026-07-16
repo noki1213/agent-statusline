@@ -26,11 +26,19 @@ cat << 'EOF' > "$UPDATE_SCRIPT"
 #!/bin/bash
 FORCE_UPDATE=$2
 if [ "$FORCE_UPDATE" != "force" ] && [ -f "$1" ]; then
-    # Skip the refresh if it's been less than 5 minutes
+# Skip the refresh if it's been less than 5 minutes
     if find "$1" -mmin -5 2>/dev/null | grep -q .; then exit 0; fi
 fi
 touch "$1" # タイムスタンプ更新（多重起動防止）
-AGY_CLI_CMD="${AGY_USAGE_COMMAND:-agy-usage-cli}"
+
+# Get the command path from ~/.config/agy_cli_path (kept consistent with the RunCat side)
+CLI_PATH_CONFIG="${HOME}/.config/agy_cli_path"
+if [ -f "$CLI_PATH_CONFIG" ]; then
+    AGY_CLI_CMD=$(cat "$CLI_PATH_CONFIG")
+else
+    AGY_CLI_CMD="${AGY_USAGE_COMMAND:-agy-usage-cli}"
+fi
+
 ${AGY_CLI_CMD} usage --provider antigravity --format json > "${1}.tmp" 2>/dev/null
 if [ -s "${1}.tmp" ]; then
     mv "${1}.tmp" "$1"
