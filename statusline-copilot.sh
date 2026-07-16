@@ -274,8 +274,8 @@ if [ -n "$PREMIUM_USED_PCT" ]; then
 	bar=$(progress_bar "$PREMIUM_USED_PCT" "$IDEAL")
 	display_pct=$(printf "%.0f" "$PREMIUM_USED_PCT")
     
-	# Use the "30d" prefix to keep the look fully consistent with Claude/Agy
-	line4="${c}30d ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
+	# Use the "1m" prefix so the look exactly matches other AI coding CLIs' status lines
+	line4="${c}1m  ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
 	if [ -n "$reset_display" ]; then
 		dt_str=$(reset_datetime "$RESET_EPOCH")
 		line4+=" ${reset_display} ${dt_str}"
