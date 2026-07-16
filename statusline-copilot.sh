@@ -259,12 +259,9 @@ if [ -n "$PREMIUM_USED_PCT" ]; then
 	bar=$(progress_bar "$PREMIUM_USED_PCT" "$IDEAL")
 	display_pct=$(printf "%.0f" "$PREMIUM_USED_PCT")
     
-	ent_text=""
-	[ -n "$ENTITLEMENT" ] && ent_text=" (月間${ENTITLEMENT}回)"
-    
-	line4="${c}Prem ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
+	# Use the "30d" prefix to keep the look fully consistent with Claude/Agy
+	line4="${c}30d ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
 	[ -n "$reset_display" ] && line4+=" ${reset_display}"
-	line4+=" ${ent_text}"
 fi
 
 # ---------- Output ----------
