@@ -31,18 +31,15 @@ if [ "$FORCE_UPDATE" != "force" ] && [ -f "$1" ]; then
 fi
 touch "$1" # タイムスタンプ更新（多重起動防止）
 
-# ~/.config/agy_cli_path からコマンドパスを取得する（RunCat側と統一）
-CLI_PATH_CONFIG="${HOME}/.config/agy_cli_path"
-if [ -f "$CLI_PATH_CONFIG" ]; then
-    AGY_CLI_CMD=$(cat "$CLI_PATH_CONFIG")
-else
-    AGY_CLI_CMD="${AGY_USAGE_COMMAND:-agy-usage-cli}"
-fi
-
-${AGY_CLI_CMD} usage --provider antigravity --format json > "${1}.tmp" 2>/dev/null
-if [ -s "${1}.tmp" ]; then
-    mv "${1}.tmp" "$1"
-fi
+# ローカルの Antigravity サーバーから直接クオータを取得
+for PORT in $(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | grep -E "language_server|agy" | awk '{print $9}' | cut -d':' -f2 | sort -u); do
+    res=$(curl -s -k -m 2 -X POST -H "Content-Type: application/json" -d '{}' "https://127.0.0.1:${PORT}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary" 2>/dev/null)
+    if echo "$res" | grep -q "remainingFraction"; then
+        echo "$res" > "${1}.tmp"
+        mv "${1}.tmp" "$1"
+        exit 0
+    fi
+done
 EOF
 chmod +x "$UPDATE_SCRIPT"
 
@@ -177,18 +174,18 @@ fi
 model_lower=$(echo "$model_name" | tr '[:upper:]' '[:lower:]')
 if [[ "$model_lower" == *"claude"* || "$model_lower" == *"gpt"* ]]; then
 	PRIMARY_NAME="Claude/GPT"
-	PRIMARY_5H_ID="antigravity-quota-summary-3p-5h"
-	PRIMARY_7D_ID="antigravity-quota-summary-3p-weekly"
+	PRIMARY_5H_ID="3p-5h"
+	PRIMARY_7D_ID="3p-weekly"
 	ALT_NAME="Gemini"
-	ALT_5H_ID="antigravity-quota-summary-gemini-5h"
-	ALT_7D_ID="antigravity-quota-summary-gemini-weekly"
+	ALT_5H_ID="gemini-5h"
+	ALT_7D_ID="gemini-weekly"
 else
 	PRIMARY_NAME="Gemini"
-	PRIMARY_5H_ID="antigravity-quota-summary-gemini-5h"
-	PRIMARY_7D_ID="antigravity-quota-summary-gemini-weekly"
+	PRIMARY_5H_ID="gemini-5h"
+	PRIMARY_7D_ID="gemini-weekly"
 	ALT_NAME="Claude/GPT"
-	ALT_5H_ID="antigravity-quota-summary-3p-5h"
-	ALT_7D_ID="antigravity-quota-summary-3p-weekly"
+	ALT_5H_ID="3p-5h"
+	ALT_7D_ID="3p-weekly"
 fi
 
 P_5H_PCT=""
@@ -200,20 +197,18 @@ A_7D_PCT=""
 
 if [ -s "$CACHE_FILE" ]; then
 	eval "$(jq -r --arg p5 "$PRIMARY_5H_ID" --arg p7 "$PRIMARY_7D_ID" --arg a5 "$ALT_5H_ID" --arg a7 "$ALT_7D_ID" '
-	  (.[0].usage.extraRateWindows[]? | select(.id == $p5) | 
-	    "P_5H_PCT=" + (.window.usedPercent | tostring) + "\n" +
-	    "P_5H_RESET=" + (if .window.resetsAt then (.window.resetsAt | fromdateiso8601 | tostring) else "0" end)
-	  ),
-	  (.[0].usage.extraRateWindows[]? | select(.id == $p7) | 
-	    "P_7D_PCT=" + (.window.usedPercent | tostring) + "\n" +
-	    "P_7D_RESET=" + (if .window.resetsAt then (.window.resetsAt | fromdateiso8601 | tostring) else "0" end)
-	  ),
-	  (.[0].usage.extraRateWindows[]? | select(.id == $a5) | 
-	    "A_5H_PCT=" + (.window.usedPercent | tostring)
-	  ),
-	  (.[0].usage.extraRateWindows[]? | select(.id == $a7) | 
-	    "A_7D_PCT=" + (.window.usedPercent | tostring)
-	  )
+	  .response.groups[].buckets[]? |
+	  if .bucketId == $p5 then
+	    "P_5H_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end) + "\n" +
+	    "P_5H_RESET=" + (if .resetTime then (.resetTime | fromdateiso8601 | tostring) else "0" end)
+	  elif .bucketId == $p7 then
+	    "P_7D_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end) + "\n" +
+	    "P_7D_RESET=" + (if .resetTime then (.resetTime | fromdateiso8601 | tostring) else "0" end)
+	  elif .bucketId == $a5 then
+	    "A_5H_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end)
+	  elif .bucketId == $a7 then
+	    "A_7D_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end)
+	  else empty end
 	' "$CACHE_FILE" 2>/dev/null)"
 fi
 
@@ -318,9 +313,9 @@ if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
 		[ "$git_behind" -gt 0 ] && push_mark="${push_mark} ↓${git_behind}"
 	fi
 	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then
-		line2="${git_line_color}${vis} ${git_repo} [${git_branch}]${push_mark}${RESET}"
+		line2="${git_line_color}${vis:-} ${git_repo} [${git_branch}]${push_mark}${RESET}"
 	else
-		line2="${git_line_color}${vis} ${git_repo} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
+		line2="${git_line_color}${vis:-} ${git_repo} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
 	fi
 elif [ -n "$git_branch" ]; then
 	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then
