@@ -11,7 +11,8 @@ mkdir -p "$SETTINGS_DIR"
 if [ -f "$SETTINGS_FILE" ]; then
     # Append statusLine to the existing file
     jq --arg script "$SCRIPT_PATH" '. + {statusLine: {type: "command", command: ("bash " + $script)}}' "$SETTINGS_FILE" > /tmp/claude_settings.json
-    mv /tmp/claude_settings.json "$SETTINGS_FILE"
+    cat /tmp/claude_settings.json > "$SETTINGS_FILE"
+    rm /tmp/claude_settings.json
     echo "✅ 既存の settings.json に statusLine の設定を追加しました！"
 else
     # Create new
