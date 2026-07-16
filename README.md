@@ -3,7 +3,7 @@
 [English](#english) | [日本語](#japanese)
 
 <a name="english"></a>
-A custom status line script for [Claude Code](https://claude.ai/code) and Antigravity (Windsurf) that displays context usage, rate limit progress bars, and git information.
+A custom status line script for [Claude Code](https://claude.ai/code), Antigravity (Windsurf), and GitHub Copilot CLI that displays context usage, rate limit progress bars, and git information.
 
 ## Preview
 
@@ -24,6 +24,14 @@ Claude Sonnet 4.6 │ CTX 0%
 5h ┃░░░░░░░░░   9% →    04h 22m
 7d █┃██░░░░░░  37% → 5d 08h 14m
 ↳ Claude/GPT: 5h ░░░░░   0% │ 7d ███░░  58%
+```
+
+**For GitHub Copilot CLI (`statusline-copilot.sh`)**
+```
+~/path/to/agent-statusline
+git: agent-statusline [main]
+Copilot (individual) │ CTX 0%
+Prem ████┃░░░░░  53% → 15d 14h 11m  (月間200回)
 ```
 
 ## What it shows
@@ -63,7 +71,7 @@ Open your terminal, navigate to the extracted folder, and make the scripts execu
 
 ```bash
 cd path/to/agent-statusline
-chmod +x statusline-claude.sh statusline-agy.sh apply-claude-settings.sh apply-agy-settings.sh
+chmod +x statusline-claude.sh statusline-agy.sh statusline-copilot.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
 ### 2. Apply Settings to Agents
@@ -84,6 +92,10 @@ Run the included setup script to automatically configure Antigravity:
 ./apply-agy-settings.sh
 ```
 
+#### For GitHub Copilot CLI
+
+Since Copilot CLI does not have a native `statusLine` hook like Claude/Antigravity, you can use `statusline-copilot.sh` directly within your `tmux` or `SketchyBar` configuration. It natively reads the Copilot limits using `gh api`.
+
 ## Notes
 
 - Rate limit info is fetched and cached locally to avoid excessive API calls.
@@ -91,10 +103,9 @@ Run the included setup script to automatically configure Antigravity:
 
 ---
 
-<a name="japanese"></a>
 # 日本語ドキュメント
 
-Claude Code および Antigravity 向けのカスタムステータスラインスクリプトです。コンテキスト使用率・レートリミットのプログレスバー・git 情報などを表示します。
+Claude Code、Antigravity、および GitHub Copilot CLI 向けのカスタムステータスラインスクリプトです。コンテキスト使用率・レートリミットのプログレスバー・git 情報などを表示します。
 
 ## プレビュー
 
@@ -115,6 +126,14 @@ Claude Sonnet 4.6 │ CTX 0%
 5h ┃░░░░░░░░░   9% →    04h 22m
 7d █┃██░░░░░░  37% → 5d 08h 14m
 ↳ Claude/GPT: 5h ░░░░░   0% │ 7d ███░░  58%
+```
+
+**GitHub Copilot CLI の場合 (`statusline-copilot.sh`)**
+```
+~/path/to/agent-statusline
+git: agent-statusline [main]
+Copilot (individual) │ CTX 0%
+Prem ████┃░░░░░  53% → 15d 14h 11m  (月間200回)
 ```
 
 ## 表示内容
@@ -154,7 +173,7 @@ brew install jq
 
 ```bash
 cd path/to/agent-statusline
-chmod +x statusline-claude.sh statusline-agy.sh apply-claude-settings.sh apply-agy-settings.sh
+chmod +x statusline-claude.sh statusline-agy.sh statusline-copilot.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
 ### 2. 各エージェントへの設定適用
@@ -174,6 +193,10 @@ chmod +x statusline-claude.sh statusline-agy.sh apply-claude-settings.sh apply-a
 ```bash
 ./apply-agy-settings.sh
 ```
+
+#### GitHub Copilot CLI の場合
+
+Copilot CLI には Claude Code のような標準の `statusLine` 設定がありません。そのため、`statusline-copilot.sh` を `tmux` や `SketchyBar` の設定スクリプトから直接呼び出して使用してください。内部で `gh api` を使って月間制限を自動取得します。
 
 ## 備考
 
