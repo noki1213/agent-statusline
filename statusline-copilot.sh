@@ -274,8 +274,8 @@ if [ -n "$PREMIUM_USED_PCT" ]; then
 	bar=$(progress_bar "$PREMIUM_USED_PCT" "$IDEAL")
 	display_pct=$(printf "%.0f" "$PREMIUM_USED_PCT")
     
-	# Claude/Agy と見た目を完全に統一するため、プレフィックスを「30d」にする
-	line4="${c}30d ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
+	# Claude/Agy と見た目を完全に統一するため、プレフィックスを「1m」にする
+	line4="${c}1m  ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
 	if [ -n "$reset_display" ]; then
 		dt_str=$(reset_datetime "$RESET_EPOCH")
 		line4+=" ${reset_display} ${dt_str}"
