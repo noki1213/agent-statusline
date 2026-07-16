@@ -31,7 +31,7 @@ Claude Sonnet 4.6 │ CTX 0%
 ~/path/to/agent-statusline
 git: agent-statusline [main]
 Copilot (individual) │ CTX 0%
-30d ████┃░░░░░  53% → 15d 14h 11m (08/01 Sat 00:00)
+30d ████┃░░░░░  53% → 15d 14h 11m (08/01 土 00:00)
 ```
 
 ## What it shows
@@ -133,7 +133,7 @@ Claude Sonnet 4.6 │ CTX 0%
 ~/path/to/agent-statusline
 git: agent-statusline [main]
 Copilot (individual) │ CTX 0%
-30d ████┃░░░░░  53% → 15d 14h 11m (08/01 Sat 00:00)
+30d ████┃░░░░░  53% → 15d 14h 11m (08/01 土 00:00)
 ```
 
 ## 表示内容

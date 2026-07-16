@@ -202,7 +202,7 @@ reset_datetime() {
 	local epoch="$1"
 	[ -z "$epoch" ] || [ "$epoch" = "0" ] && echo "" && return
 	local dt
-	dt=$(date -r "$epoch" +'%m/%d %a %H:%M')
+	dt=$(LC_TIME="ja_JP.UTF-8" date -r "$epoch" +'%m/%d %a %H:%M')
 	printf '(%s)' "$dt"
 }
 
