@@ -197,6 +197,15 @@ if [ -n "$RESET_EPOCH" ] && [ "$RESET_EPOCH" != "0" ]; then
 	[ -n "$cd_time" ] && reset_display="→ ${cd_time}"
 fi
 
+# ---------- Build a reset-time string from epoch seconds ----------
+reset_datetime() {
+	local epoch="$1"
+	[ -z "$epoch" ] || [ "$epoch" = "0" ] && echo "" && return
+	local dt
+	dt=$(date -r "$epoch" +'%m/%d %a %H:%M')
+	printf '(%s)' "$dt"
+}
+
 # ---------- Calculate the ideal position (approximating the monthly limit as 30 days = 2592000 seconds) ----------
 ideal_bar_pos() {
 	local reset_epoch="$1"
@@ -261,7 +270,10 @@ if [ -n "$PREMIUM_USED_PCT" ]; then
     
 	# Use the "30d" prefix to keep the look fully consistent with Claude/Agy
 	line4="${c}30d ${bar} $(printf '%3s' "${display_pct}")%${RESET}"
-	[ -n "$reset_display" ] && line4+=" ${reset_display}"
+	if [ -n "$reset_display" ]; then
+		dt_str=$(reset_datetime "$RESET_EPOCH")
+		line4+=" ${reset_display} ${dt_str}"
+	fi
 fi
 
 # ---------- Output ----------
