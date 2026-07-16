@@ -65,6 +65,7 @@ progress_bar() {
 # 呼び出し元から JSON が渡ってきた場合のみパース
 eval "$(echo "$input" | jq -r '
 	"cwd=" + (.cwd // "" | @sh),
+	"model_name=" + (.model.display_name // "Copilot" | @sh),
 	"used_pct=" + (.context_window.used_percentage // 0 | tostring)
 ' 2>/dev/null || true)"
 
@@ -202,7 +203,12 @@ reset_datetime() {
 	local epoch="$1"
 	[ -z "$epoch" ] || [ "$epoch" = "0" ] && echo "" && return
 	local dt
-	dt=$(LC_TIME="ja_JP.UTF-8" date -r "$epoch" +'%m/%d %a %H:%M')
+	# 日本語環境の場合のみ「土」などの日本語曜日を使用する
+	if [[ "${LANG:-}" == *"ja"* ]] || [[ "${LC_ALL:-}" == *"ja"* ]] || [[ "${LC_TIME:-}" == *"ja"* ]]; then
+		dt=$(LC_TIME="ja_JP.UTF-8" date -r "$epoch" +'%m/%d %a %H:%M')
+	else
+		dt=$(date -r "$epoch" +'%m/%d %a %H:%M')
+	fi
 	printf '(%s)' "$dt"
 }
 
@@ -258,7 +264,7 @@ if [ -n "$used_pct" ] && [ "$used_pct" != "null" ] && [ "$used_pct" != "0" ]; th
 fi
 
 # CTXが0の場合は表示しない、など調整可能ですがClaudeに合わせます
-line3="Copilot (${copilot_plan})${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
+line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
 
 # ---------- 4行目 (Premium) ----------
 # ※ Chat は無制限なので表示領域の節約のため非表示 (案Cを採用)
