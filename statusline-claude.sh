@@ -239,9 +239,9 @@ if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
 		[ "$git_behind" -gt 0 ] && push_mark="${push_mark} ↓${git_behind}"
 	fi
 	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then
-		line2="${git_line_color}${vis} ${git_repo} [${git_branch}]${push_mark}${RESET}"
+		line2="${git_line_color}${vis:-} ${git_repo} [${git_branch}]${push_mark}${RESET}"
 	else
-		line2="${git_line_color}${vis} ${git_repo} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
+		line2="${git_line_color}${vis:-} ${git_repo} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
 	fi
 elif [ -n "$git_branch" ]; then
 	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then

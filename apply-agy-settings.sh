@@ -11,7 +11,8 @@ mkdir -p "$SETTINGS_DIR"
 if [ -f "$SETTINGS_FILE" ]; then
     # 既存のファイルに statusLine を追記
     jq --arg script "$SCRIPT_PATH" '. + {statusLine: {type: "", command: ("bash " + $script), enabled: true}}' "$SETTINGS_FILE" > /tmp/agy_settings.json
-    mv /tmp/agy_settings.json "$SETTINGS_FILE"
+    cat /tmp/agy_settings.json > "$SETTINGS_FILE"
+    rm /tmp/agy_settings.json
     echo "✅ 既存の settings.json に statusLine の設定を追加しました！"
 else
     # 新規作成
