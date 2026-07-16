@@ -65,6 +65,7 @@ progress_bar() {
 # Only parse it when the caller passed in JSON
 eval "$(echo "$input" | jq -r '
 	"cwd=" + (.cwd // "" | @sh),
+	"model_name=" + (.model.display_name // "Copilot" | @sh),
 	"used_pct=" + (.context_window.used_percentage // 0 | tostring)
 ' 2>/dev/null || true)"
 
@@ -202,7 +203,12 @@ reset_datetime() {
 	local epoch="$1"
 	[ -z "$epoch" ] || [ "$epoch" = "0" ] && echo "" && return
 	local dt
-	dt=$(LC_TIME="ja_JP.UTF-8" date -r "$epoch" +'%m/%d %a %H:%M')
+	# Use Japanese weekday names (e.g. "土") only in a Japanese locale
+	if [[ "${LANG:-}" == *"ja"* ]] || [[ "${LC_ALL:-}" == *"ja"* ]] || [[ "${LC_TIME:-}" == *"ja"* ]]; then
+		dt=$(LC_TIME="ja_JP.UTF-8" date -r "$epoch" +'%m/%d %a %H:%M')
+	else
+		dt=$(date -r "$epoch" +'%m/%d %a %H:%M')
+	fi
 	printf '(%s)' "$dt"
 }
 
@@ -258,7 +264,7 @@ if [ -n "$used_pct" ] && [ "$used_pct" != "null" ] && [ "$used_pct" != "0" ]; th
 fi
 
 # Adjustable, e.g. hiding it when CTX is 0, but we match Claude's behavior here
-line3="Copilot (${copilot_plan})${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
+line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
 
 # ---------- Line 4 (Premium) ----------
 # Note: Chat is unlimited, so it's hidden to save display space (went with option C)
