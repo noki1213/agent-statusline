@@ -64,6 +64,7 @@ progress_bar() {
 # ---------- Get the needed info from stdin (batch-processed with jq) ----------
 eval "$(echo "$input" | jq -r '
 	"model_name=" + (.model.display_name // "Unknown" | @sh),
+	"effort=" + (.effort.level // "" | @sh),
 	"used_pct=" + (.context_window.used_percentage // 0 | tostring),
 	"ctx_size=" + (.context_window.context_window_size // 0 | tostring),
 	"cwd=" + (.cwd // "" | @sh),
@@ -251,8 +252,13 @@ elif [ -n "$git_branch" ]; then
 	fi
 fi
 
-# Line 3: model name + CTX
-line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
+# Line 3: model name + effort + CTX
+# effort is only passed for models that support it, so skip the display when it's empty
+effort_part=""
+if [ -n "$effort" ]; then
+	effort_part="${SEP}${effort}"
+fi
+line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
 
 # ---------- Build a reset-time string from epoch seconds ----------
 # Format like " 3/18 Wed 14:32", with month/day space-padded
