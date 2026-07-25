@@ -64,6 +64,7 @@ progress_bar() {
 # ---------- stdin から必要な情報を取得（jq で一括処理）----------
 eval "$(echo "$input" | jq -r '
 	"model_name=" + (.model.display_name // "Unknown" | @sh),
+	"effort=" + (.effort.level // "" | @sh),
 	"used_pct=" + (.context_window.used_percentage // 0 | tostring),
 	"ctx_size=" + (.context_window.context_window_size // 0 | tostring),
 	"cwd=" + (.cwd // "" | @sh),
@@ -251,8 +252,13 @@ elif [ -n "$git_branch" ]; then
 	fi
 fi
 
-# 3行目：モデル名 + CTX
-line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
+# 3行目：モデル名 + effort + CTX
+# effort は対応モデルのときだけ渡ってくるので、空なら表示しない
+effort_part=""
+if [ -n "$effort" ]; then
+	effort_part="${SEP}${effort}"
+fi
+line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
 
 # ---------- エポック秒からリセット日時の文字列を生成する ----------
 # ( 3/18 Wed 14:32) 形式、月・日はスペース揃え
