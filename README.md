@@ -11,7 +11,7 @@ A custom status line script for [Claude Code](https://claude.ai/code), Antigravi
 ```
 ~/path/to/agent-statusline
 git: agent-statusline [main]
-Claude Sonnet 4.6 │ CTX 12%
+Claude Sonnet 4.6 │ CTX 12% │ 
 5h ┃██░░░░░░░░  24% →    03h 15m
 7d █┃██░░░░░░  37% → 5d 08h 14m
 ```
@@ -46,6 +46,9 @@ Colors change based on usage: green (< 50%) → yellow (50–79%) → red (≥ 8
 
 **✨ Unique Feature: Ideal Progress Marker (`┃`)**
 The progress bar includes a vertical bar marker (`┃`) that indicates your "ideal" usage pace based on the time remaining until your rate limits reset. If your current usage bar stays behind this marker, you are using the AI at a safe and sustainable pace without hitting the limits!
+
+**Plan status icon (Claude Code only)**
+Next to `CTX %`, a blue clock icon means you're still within your plan's rate limits. Once either the 5-hour or 7-day limit hits 100%, it switches to a red credit card icon, indicating you're now drawing on pay-as-you-go usage credits.
 
 ## Requirements
 
@@ -113,7 +116,7 @@ Claude Code、Antigravity、および GitHub Copilot CLI 向けのカスタム�
 ```
 ~/path/to/agent-statusline
 git: agent-statusline [main]
-Claude Sonnet 4.6 │ CTX 12%
+Claude Sonnet 4.6 │ CTX 12% │ 
 5h ┃██░░░░░░░░  24% →    03h 15m
 7d █┃██░░░░░░  37% → 5d 08h 14m
 ```
@@ -148,6 +151,9 @@ Copilot │ CTX 0%
 
 **✨ ユニークな機能：理想進捗マーカー（`┃`）**
 プログレスバーの中にある縦棒（`┃`）は、リセット時刻までの残り時間から逆算した「理想の消費ペース」を示しています。現在の使用量がこのマーカーより左側に収まっていれば、制限に引っかかることなく安全なペースで使えているという画期的な目安になります！
+
+**プラン状態アイコン（Claude Code のみ）**
+`CTX %`の右にある青い時計アイコンは、プランのレートリミット内であることを示します。5時間または7日間のいずれかが100%に到達すると、赤いクレジットカードのアイコンに切り替わり、従量課金のcredits消費中であることを示します。
 
 ## 必要なもの
 
