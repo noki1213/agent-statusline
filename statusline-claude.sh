@@ -265,12 +265,8 @@ if { [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || {
 	# プラン上限に到達 → credits消費中アイコン
 	credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
 else
-	# プラン内 → 正常マーク（色は5h/7dのうち高い方の使用率に合わせる）
-	rate_max=0
-	[ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -gt "$rate_max" ] 2>/dev/null && rate_max="$FIVE_HOUR_PCT"
-	[ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -gt "$rate_max" ] 2>/dev/null && rate_max="$SEVEN_DAY_PCT"
-	plan_ok_color=$(color_for_pct "$rate_max")
-	credits_part="${SEP}${plan_ok_color}${PLAN_OK_ICON}${RESET}"
+	# プラン内 → 正常マーク（青固定）
+	credits_part="${SEP}${BLUE}${PLAN_OK_ICON}${RESET}"
 fi
 line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${credits_part}"
 
