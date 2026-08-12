@@ -259,8 +259,19 @@ if [ -n "$effort" ]; then
 	effort_part="${SEP}${effort}"
 fi
 CREDITS_ICON=$''
+PLAN_OK_ICON=$''
 credits_part=""
-{ [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; } && credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
+if { [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; }; then
+	# Plan limit reached → icon showing credits are being consumed
+	credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
+else
+	# Within plan → normal marker (color follows whichever of 5h/7d has the higher usage)
+	rate_max=0
+	[ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -gt "$rate_max" ] 2>/dev/null && rate_max="$FIVE_HOUR_PCT"
+	[ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -gt "$rate_max" ] 2>/dev/null && rate_max="$SEVEN_DAY_PCT"
+	plan_ok_color=$(color_for_pct "$rate_max")
+	credits_part="${SEP}${plan_ok_color}${PLAN_OK_ICON}${RESET}"
+fi
 line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${credits_part}"
 
 # ---------- Build a reset-time string from epoch seconds ----------
