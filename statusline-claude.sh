@@ -259,7 +259,7 @@ if [ -n "$effort" ]; then
 	effort_part="${SEP}${effort}"
 fi
 CREDITS_ICON=$''
-PLAN_OK_ICON=$''
+PLAN_OK_ICON=$''
 credits_part=""
 if { [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; }; then
 	# プラン上限に到達 → credits消費中アイコン
