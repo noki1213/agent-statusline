@@ -259,8 +259,19 @@ if [ -n "$effort" ]; then
 	effort_part="${SEP}${effort}"
 fi
 CREDITS_ICON=$''
+PLAN_OK_ICON=$''
 credits_part=""
-{ [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; } && credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
+if { [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; }; then
+	# プラン上限に到達 → credits消費中アイコン
+	credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
+else
+	# プラン内 → 正常マーク（色は5h/7dのうち高い方の使用率に合わせる）
+	rate_max=0
+	[ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -gt "$rate_max" ] 2>/dev/null && rate_max="$FIVE_HOUR_PCT"
+	[ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -gt "$rate_max" ] 2>/dev/null && rate_max="$SEVEN_DAY_PCT"
+	plan_ok_color=$(color_for_pct "$rate_max")
+	credits_part="${SEP}${plan_ok_color}${PLAN_OK_ICON}${RESET}"
+fi
 line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${credits_part}"
 
 # ---------- エポック秒からリセット日時の文字列を生成する ----------
