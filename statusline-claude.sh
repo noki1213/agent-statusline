@@ -252,13 +252,16 @@ elif [ -n "$git_branch" ]; then
 	fi
 fi
 
-# 3行目：モデル名 + effort + CTX
+# 3行目：モデル名 + effort + CTX + credits消費中アイコン
 # effort は対応モデルのときだけ渡ってくるので、空なら表示しない
 effort_part=""
 if [ -n "$effort" ]; then
 	effort_part="${SEP}${effort}"
 fi
-line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
+CREDITS_ICON=$''
+credits_part=""
+{ [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; } && credits_part=" ${RED}${CREDITS_ICON}${RESET}"
+line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${credits_part}"
 
 # ---------- エポック秒からリセット日時の文字列を生成する ----------
 # ( 3/18 Wed 14:32) 形式、月・日はスペース揃え
@@ -275,16 +278,12 @@ reset_datetime() {
 	printf '(%s)' "$dt"
 }
 
-# ---------- 100%超え（usage credits消費中とみなす）のアイコン ----------
-CREDITS_ICON=$''
-
 # ---------- 4行目（5時間レートリミット）----------
 line4=""
 if [ -n "$FIVE_HOUR_PCT" ]; then
 	c5=$(color_for_pct "$FIVE_HOUR_PCT")
 	bar5=$(progress_bar "$FIVE_HOUR_PCT" "$IDEAL5")
 	line4="${c5}5h ${bar5} $(printf '%3s' "${FIVE_HOUR_PCT}")%${RESET}"
-	[ "$FIVE_HOUR_PCT" -gt 100 ] 2>/dev/null && line4+=" ${c5}${CREDITS_ICON}${RESET}"
 	if [ -n "$five_reset_display" ]; then
 		dt5=$(reset_datetime "$FIVE_HOUR_RESET")
 		line4+=" ${five_reset_display} ${dt5}"
@@ -299,7 +298,6 @@ if [ -n "$SEVEN_DAY_PCT" ]; then
 	c7=$(color_for_pct "$SEVEN_DAY_PCT")
 	bar7=$(progress_bar "$SEVEN_DAY_PCT" "$IDEAL7")
 	line5="${c7}7d ${bar7} $(printf '%3s' "${SEVEN_DAY_PCT}")%${RESET}"
-	[ "$SEVEN_DAY_PCT" -gt 100 ] 2>/dev/null && line5+=" ${c7}${CREDITS_ICON}${RESET}"
 	if [ -n "$seven_reset_display" ]; then
 		dt7=$(reset_datetime "$SEVEN_DAY_RESET")
 		line5+=" ${seven_reset_display} ${dt7}"
