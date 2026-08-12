@@ -275,12 +275,16 @@ reset_datetime() {
 	printf '(%s)' "$dt"
 }
 
+# ---------- 100%超え（usage credits消費中とみなす）のアイコン ----------
+CREDITS_ICON=$''
+
 # ---------- 4行目（5時間レートリミット）----------
 line4=""
 if [ -n "$FIVE_HOUR_PCT" ]; then
 	c5=$(color_for_pct "$FIVE_HOUR_PCT")
 	bar5=$(progress_bar "$FIVE_HOUR_PCT" "$IDEAL5")
 	line4="${c5}5h ${bar5} $(printf '%3s' "${FIVE_HOUR_PCT}")%${RESET}"
+	[ "$FIVE_HOUR_PCT" -gt 100 ] 2>/dev/null && line4+=" ${c5}${CREDITS_ICON}${RESET}"
 	if [ -n "$five_reset_display" ]; then
 		dt5=$(reset_datetime "$FIVE_HOUR_RESET")
 		line4+=" ${five_reset_display} ${dt5}"
@@ -295,6 +299,7 @@ if [ -n "$SEVEN_DAY_PCT" ]; then
 	c7=$(color_for_pct "$SEVEN_DAY_PCT")
 	bar7=$(progress_bar "$SEVEN_DAY_PCT" "$IDEAL7")
 	line5="${c7}7d ${bar7} $(printf '%3s' "${SEVEN_DAY_PCT}")%${RESET}"
+	[ "$SEVEN_DAY_PCT" -gt 100 ] 2>/dev/null && line5+=" ${c7}${CREDITS_ICON}${RESET}"
 	if [ -n "$seven_reset_display" ]; then
 		dt7=$(reset_datetime "$SEVEN_DAY_RESET")
 		line5+=" ${seven_reset_display} ${dt7}"
