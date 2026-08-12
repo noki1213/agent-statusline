@@ -260,7 +260,7 @@ if [ -n "$effort" ]; then
 fi
 CREDITS_ICON=$''
 credits_part=""
-{ [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; } && credits_part=" ${RED}${CREDITS_ICON}${RESET}"
+{ [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; } && credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
 line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${credits_part}"
 
 # ---------- エポック秒からリセット日時の文字列を生成する ----------
