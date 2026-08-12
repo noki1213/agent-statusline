@@ -258,7 +258,7 @@ effort_part=""
 if [ -n "$effort" ]; then
 	effort_part="${SEP}${effort}"
 fi
-CREDITS_ICON=$''
+CREDITS_ICON=$''
 credits_part=""
 { [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; } && credits_part=" ${RED}${CREDITS_ICON}${RESET}"
 line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${credits_part}"
