@@ -116,9 +116,9 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 			# Inspect the git status and decide the color
 			porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
 			# Check for unstaged changes (new/modified/deleted) (2nd char is not a space)
-			has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
+			has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || true)
 			# Check for staged-but-uncommitted changes (1st char shows a change, 2nd char is a space)
-			has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
+			has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || true)
 
 			if [ "$has_unstaged" -gt 0 ]; then
 				# Unstaged changes exist (needs git add) → red

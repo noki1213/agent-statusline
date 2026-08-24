@@ -147,8 +147,8 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 
 		if ! $git_not_owned; then
 			porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
-			has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
-			has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
+			has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || true)
+			has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || true)
 
 			if [ "$has_unstaged" -gt 0 ]; then
 				git_line_color="$RED"
