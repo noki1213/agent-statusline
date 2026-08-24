@@ -232,7 +232,7 @@ IDEAL=$(ideal_bar_pos "$RESET_EPOCH" "2592000")
 
 # ---------- Building line 1 and line 2 ----------
 SEP="${GRAY} │ ${RESET}"
-line1="${WHITE}󰉋 ${dir_name}${RESET}"
+line1="󰉋 ${dir_name}"
 line2=""
 
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then

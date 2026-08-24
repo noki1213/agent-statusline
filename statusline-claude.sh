@@ -224,7 +224,7 @@ fi
 SEP="${GRAY} │ ${RESET}"
 
 # Line 1: directory
-line1="${WHITE}󰉋 ${dir_name}${RESET}"
+line1="󰉋 ${dir_name}"
 
 # Line 2: git (only when inside a repo)
 line2=""
