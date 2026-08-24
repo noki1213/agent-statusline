@@ -291,13 +291,6 @@ if [ -n "$used_pct" ] && [ "$used_pct" != "null" ] && [ "$used_pct" != "0" ]; th
 	ctx_pct_int=$(printf "%.0f" "$used_pct" 2>/dev/null || echo 0)
 fi
 
-ctx_color=$WHITE
-if [ "$ctx_pct_int" -ge 80 ]; then
-	ctx_color=$RED
-elif [ "$ctx_pct_int" -ge 50 ]; then
-	ctx_color=$YELLOW
-fi
-
 # ---------- Building the line ----------
 SEP="${GRAY} │ ${RESET}"
 
@@ -329,7 +322,7 @@ fi
 extras=""
 [ -n "$task_count" ] && [ "$task_count" -gt 0 ] && extras="${SEP}⚙Tasks: ${task_count}"
 [ -n "$subagents" ] && [ "$subagents" -gt 0 ] && extras="${extras}${SEP}🤖Subagents: ${subagents}"
-line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${extras}"
+line3="${model_name}${SEP}CTX ${ctx_pct_int}%${extras}"
 
 # Line 4 (main model, 5h)
 line4=""

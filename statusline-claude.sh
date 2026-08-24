@@ -222,7 +222,6 @@ fi
 
 # ---------- Building line 1 ----------
 SEP="${GRAY} │ ${RESET}"
-ctx_color=$WHITE
 
 # Line 1: directory
 line1="${WHITE}󰉋 ${dir_name}${RESET}"
@@ -268,7 +267,7 @@ else
 	# Within plan → normal mark (fixed blue)
 	credits_part="${SEP}${BLUE}${PLAN_OK_ICON}${RESET}"
 fi
-line3="${model_name}${effort_part}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}${credits_part}"
+line3="${model_name}${effort_part}${SEP}CTX ${ctx_pct_int}%${credits_part}"
 
 # ---------- Build a reset-time string from epoch seconds ----------
 # Format like " 3/18 Wed 14:32", with month/day space-padded

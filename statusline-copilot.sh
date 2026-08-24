@@ -232,7 +232,6 @@ IDEAL=$(ideal_bar_pos "$RESET_EPOCH" "2592000")
 
 # ---------- Building line 1 and line 2 ----------
 SEP="${GRAY} │ ${RESET}"
-ctx_color=$WHITE
 line1="${WHITE}󰉋 ${dir_name}${RESET}"
 line2=""
 
@@ -264,7 +263,7 @@ if [ -n "$used_pct" ] && [ "$used_pct" != "null" ] && [ "$used_pct" != "0" ]; th
 fi
 
 # Adjustable, e.g. hiding it when CTX is 0, but we match Claude's behavior here
-line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
+line3="${model_name}${SEP}CTX ${ctx_pct_int}%"
 
 # ---------- Line 4 (Premium) ----------
 # Note: Chat is unlimited, so it's hidden to save display space (went with option C)
