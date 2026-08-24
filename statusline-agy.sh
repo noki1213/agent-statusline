@@ -294,7 +294,7 @@ fi
 # ---------- Building the line ----------
 SEP="${GRAY} │ ${RESET}"
 
-line1="${WHITE}󰉋 ${dir_name}${RESET}"
+line1="󰉋 ${dir_name}"
 
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
