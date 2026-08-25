@@ -266,7 +266,7 @@ fi
 line3="${model_name}${SEP}CTX ${ctx_pct_int}%"
 
 # ---------- Line 4 (Premium) ----------
-# Note: Chat is unlimited, so it's hidden to save display space (went with option C)
+# Chat is unlimited, so it is hidden to save display space
 line4=""
 if [ -n "$PREMIUM_USED_PCT" ]; then
 	c=$(color_for_pct "$PREMIUM_USED_PCT")
