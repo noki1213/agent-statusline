@@ -29,7 +29,7 @@ if [ "$FORCE_UPDATE" != "force" ] && [ -f "$1" ]; then
 # Skip the refresh if it's been less than 5 minutes
     if find "$1" -mmin -5 2>/dev/null | grep -q .; then exit 0; fi
 fi
-touch "$1" # タイムスタンプ更新（多重起動防止）
+touch "$1" # Refresh the timestamp so concurrent runs bail out
 
 # Fetch the quota directly from the local Antigravity server
 for PORT in $(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | grep -E "language_server|agy" | awk '{print $9}' | cut -d':' -f2 | sort -u); do

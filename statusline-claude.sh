@@ -181,8 +181,8 @@ ideal_bar_pos() {
 	echo "$pos"
 }
 
-IDEAL5=$(ideal_bar_pos "$FIVE_HOUR_RESET" "18000")   # 5時間 = 18000秒
-IDEAL7=$(ideal_bar_pos "$SEVEN_DAY_RESET" "604800")  # 7日間 = 604800秒
+IDEAL5=$(ideal_bar_pos "$FIVE_HOUR_RESET" "18000")   # 5 hours = 18000 seconds
+IDEAL7=$(ideal_bar_pos "$SEVEN_DAY_RESET" "604800")  # 7 days = 604800 seconds
 
 # ---------- Convert epoch seconds to remaining time in Xd XXh XXm format ----------
 countdown() {
