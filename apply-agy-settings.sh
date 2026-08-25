@@ -13,11 +13,11 @@ if [ -f "$SETTINGS_FILE" ]; then
     jq --arg script "$SCRIPT_PATH" '. + {statusLine: {type: "", command: ("bash " + $script), enabled: true}}' "$SETTINGS_FILE" > /tmp/agy_settings.json
     cat /tmp/agy_settings.json > "$SETTINGS_FILE"
     rm /tmp/agy_settings.json
-    echo "✅ 既存の settings.json に statusLine の設定を追加しました！"
+    echo "✅ Added the statusLine setting to your existing settings.json"
 else
     # Create new
     echo "{\"statusLine\": {\"type\": \"\", \"command\": \"bash $SCRIPT_PATH\", \"enabled\": true}}" > "$SETTINGS_FILE"
-    echo "✅ settings.json を新規作成し、statusLine の設定を追加しました！"
+    echo "✅ Created settings.json with the statusLine setting"
 fi
 
-echo "✨ これで Antigravity CLI を再起動するとステータスラインが表示されます！"
+echo "✨ Restart Antigravity CLI to see the status line"

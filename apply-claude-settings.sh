@@ -13,11 +13,11 @@ if [ -f "$SETTINGS_FILE" ]; then
     jq --arg script "$SCRIPT_PATH" '. + {statusLine: {type: "command", command: ("bash " + $script)}}' "$SETTINGS_FILE" > /tmp/claude_settings.json
     cat /tmp/claude_settings.json > "$SETTINGS_FILE"
     rm /tmp/claude_settings.json
-    echo "✅ 既存の settings.json に statusLine の設定を追加しました！"
+    echo "✅ Added the statusLine setting to your existing settings.json"
 else
     # Create new
     echo "{\"statusLine\": {\"type\": \"command\", \"command\": \"bash $SCRIPT_PATH\"}}" > "$SETTINGS_FILE"
-    echo "✅ settings.json を新規作成し、statusLine の設定を追加しました！"
+    echo "✅ Created settings.json with the statusLine setting"
 fi
 
-echo "✨ これで Claude Code を再起動するとステータスラインが表示されます！"
+echo "✨ Restart Claude Code to see the status line"
