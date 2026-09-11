@@ -48,7 +48,7 @@ Colors change based on usage: green (< 50%) → yellow (50–79%) → red (≥ 8
 The progress bar includes a vertical bar marker (`┃`) that indicates your "ideal" usage pace based on the time remaining until your rate limits reset. If your current usage bar stays behind this marker, you are using the AI at a safe and sustainable pace without hitting the limits!
 
 **Plan status icon (Claude Code only)**
-Next to `CTX %`, a blue clock icon means you're still within your plan's rate limits. Once either the 5-hour or 7-day limit hits 100%, it switches to a red credit card icon along with the estimated dollar cost of the current 5-hour billing block (via [ccusage](https://github.com/ccusage/ccusage)), indicating you're now drawing on pay-as-you-go usage credits.
+Next to `CTX %`, a blue clock icon means you're still within your plan's rate limits. Once either the 5-hour or 7-day limit hits 100%, it switches to a red credit card icon along with the estimated dollar cost of usage since the limit was hit (via [ccusage](https://github.com/ccusage/ccusage)), indicating you're now drawing on pay-as-you-go usage credits.
 
 ## Requirements
 
@@ -154,7 +154,7 @@ Copilot │ CTX 0%
 プログレスバーの中にある縦棒（`┃`）は、リセット時刻までの残り時間から逆算した「理想の消費ペース」を示しています。現在の使用量がこのマーカーより左側に収まっていれば、制限に引っかかることなく安全なペースで使えているという画期的な目安になります！
 
 **プラン状態アイコン（Claude Code のみ）**
-`CTX %`の右にある青い時計アイコンは、プランのレートリミット内であることを示します。5時間または7日間のいずれかが100%に到達すると、赤いクレジットカードのアイコンに切り替わり、[ccusage](https://github.com/ccusage/ccusage) で算出した現在の5時間枠のおおよその金額も一緒に表示され、従量課金のcredits消費中であることを示します。
+`CTX %`の右にある青い時計アイコンは、プランのレートリミット内であることを示します。5時間または7日間のいずれかが100%に到達すると、赤いクレジットカードのアイコンに切り替わり、上限に達してから使った分のおおよその金額（[ccusage](https://github.com/ccusage/ccusage) で算出）も一緒に表示され、従量課金のcredits消費中であることを示します。
 
 ## 必要なもの
 
