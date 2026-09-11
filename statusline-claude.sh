@@ -248,6 +248,31 @@ if command -v bunx >/dev/null 2>&1; then
 	fi
 fi
 
+# ---------- Isolate the overage-only portion of the cost ----------
+# ccusage only reports the whole 5h block's cost, not "cost after the plan limit
+# was hit". To approximate the overage, remember the block's cost the first time
+# used_percentage is observed at 100%+, and treat that as the baseline to subtract
+# afterward. The baseline is keyed by the block's reset time, so it is naturally
+# reset once a new 5h window starts.
+CCUSAGE_OVERAGE_STATE_FILE="${CCUSAGE_OVERAGE_STATE_FILE:-${TMPDIR:-/tmp}/ccusage-overage-state.json}"
+ccusage_overage_cost=""
+if [ -n "$ccusage_cost" ] && [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; then
+	state_reset=""
+	state_baseline=""
+	if [ -f "$CCUSAGE_OVERAGE_STATE_FILE" ]; then
+		state_reset=$(jq -r '.block_reset_epoch // empty' "$CCUSAGE_OVERAGE_STATE_FILE" 2>/dev/null)
+		state_baseline=$(jq -r '.cost_at_crossing // empty' "$CCUSAGE_OVERAGE_STATE_FILE" 2>/dev/null)
+	fi
+	if [ "$state_reset" != "$FIVE_HOUR_RESET" ] || [ -z "$state_baseline" ]; then
+		# First time this block is seen at 100%+ -> this cost becomes the baseline
+		state_baseline="$ccusage_cost"
+		jq -n --arg reset "$FIVE_HOUR_RESET" --arg cost "$state_baseline" \
+			'{block_reset_epoch: $reset, cost_at_crossing: ($cost | tonumber)}' \
+			>"$CCUSAGE_OVERAGE_STATE_FILE" 2>/dev/null
+	fi
+	ccusage_overage_cost=$(awk "BEGIN{d=$ccusage_cost-$state_baseline; if (d<0) d=0; printf \"%.2f\", d}" 2>/dev/null)
+fi
+
 # ---------- Convert context usage to an integer percentage ----------
 ctx_pct_int=0
 if [ -n "$used_pct" ] && [ "$used_pct" != "null" ] && [ "$used_pct" != "0" ]; then
@@ -294,9 +319,9 @@ fi
 CREDITS_ICON=$''
 PLAN_OK_ICON=$''
 if { [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; }; then
-	# Plan limit reached, now paying for extra usage -> credit-card icon + cost of the current 5h block
-	if [ -n "$ccusage_cost" ]; then
-		credits_part="${SEP}${RED}${CREDITS_ICON} \$${ccusage_cost}${RESET}"
+	# Plan limit reached, now paying for extra usage -> credit-card icon + overage cost only
+	if [ -n "$ccusage_overage_cost" ]; then
+		credits_part="${SEP}${RED}${CREDITS_ICON} \$${ccusage_overage_cost}${RESET}"
 	else
 		credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
 	fi
