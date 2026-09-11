@@ -214,6 +214,40 @@ if [ -n "$SEVEN_DAY_RESET" ] && [ "$SEVEN_DAY_RESET" != "0" ]; then
 	[ -n "$cd7" ] && seven_reset_display="→ ${cd7}"
 fi
 
+# ---------- Cost of the current 5-hour billing block (via ccusage) ----------
+# ccusage (https://github.com/ccusage/ccusage) reads Claude Code's local session logs
+# and estimates the dollar cost from token counts and published per-model pricing.
+# This is unrelated to the rate_limits percentage above; it is fetched asynchronously
+# and cached, since a single ccusage run takes several hundred ms.
+CCUSAGE_CACHE_FILE="${CCUSAGE_CACHE_FILE:-${TMPDIR:-/tmp}/ccusage-statusline-cache.json}"
+CCUSAGE_CACHE_TTL="${CCUSAGE_CACHE_TTL:-30}"
+ccusage_cost=""
+if command -v bunx >/dev/null 2>&1; then
+	cache_age=999999
+	if [ -f "$CCUSAGE_CACHE_FILE" ]; then
+		cache_mtime=$(stat -f %m "$CCUSAGE_CACHE_FILE" 2>/dev/null || stat -c %Y "$CCUSAGE_CACHE_FILE" 2>/dev/null || echo 0)
+		cache_age=$(( $(date +%s) - cache_mtime ))
+	fi
+	if [ "$cache_age" -ge "$CCUSAGE_CACHE_TTL" ]; then
+		# Touch the cache file first so overlapping statusline invocations
+		# within the TTL window don't all spawn a refresh
+		touch "$CCUSAGE_CACHE_FILE" 2>/dev/null
+		(
+			tmp="${CCUSAGE_CACHE_FILE}.tmp.$$"
+			if bunx ccusage@latest blocks --json --active --offline >"$tmp" 2>/dev/null; then
+				mv "$tmp" "$CCUSAGE_CACHE_FILE"
+			else
+				rm -f "$tmp"
+			fi
+		) >/dev/null 2>&1 &
+		disown 2>/dev/null || true
+	fi
+	if [ -f "$CCUSAGE_CACHE_FILE" ]; then
+		raw_cost=$(jq -r '.blocks[0].costUSD // empty' "$CCUSAGE_CACHE_FILE" 2>/dev/null)
+		[ -n "$raw_cost" ] && ccusage_cost=$(awk "BEGIN{printf \"%.2f\", $raw_cost}" 2>/dev/null)
+	fi
+fi
+
 # ---------- Convert context usage to an integer percentage ----------
 ctx_pct_int=0
 if [ -n "$used_pct" ] && [ "$used_pct" != "null" ] && [ "$used_pct" != "0" ]; then
@@ -252,19 +286,22 @@ elif [ -n "$git_branch" ]; then
 fi
 
 # Line 3: model name + effort + CTX + credits-in-use icon
-# effort is only passed for models that support it, so skip the display when it's empty
+# effort is only passed for models that support it, so skip the display when it is empty
 effort_part=""
 if [ -n "$effort" ]; then
 	effort_part="${SEP}${effort}"
 fi
 CREDITS_ICON=$''
 PLAN_OK_ICON=$''
-credits_part=""
 if { [ -n "$FIVE_HOUR_PCT" ] && [ "$FIVE_HOUR_PCT" -ge 100 ] 2>/dev/null; } || { [ -n "$SEVEN_DAY_PCT" ] && [ "$SEVEN_DAY_PCT" -ge 100 ] 2>/dev/null; }; then
-	# Plan limit reached → icon showing credits are being consumed
-	credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
+	# Plan limit reached, now paying for extra usage -> credit-card icon + cost of the current 5h block
+	if [ -n "$ccusage_cost" ]; then
+		credits_part="${SEP}${RED}${CREDITS_ICON} \$${ccusage_cost}${RESET}"
+	else
+		credits_part="${SEP}${RED}${CREDITS_ICON}${RESET}"
+	fi
 else
-	# Within plan → normal mark (fixed blue)
+	# Within the plan -> normal mark (fixed blue), no cost shown
 	credits_part="${SEP}${BLUE}${PLAN_OK_ICON}${RESET}"
 fi
 line3="${model_name}${effort_part}${SEP}CTX ${ctx_pct_int}%${credits_part}"
