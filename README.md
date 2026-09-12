@@ -56,6 +56,7 @@ Next to `CTX %`, a blue clock icon means you're still within your plan's rate li
 - `jq`
 - `curl`
 - `bash`
+- [`gh`](https://cli.github.com/) (authenticated with GitHub)
 - [`bun`](https://bun.sh) (optional, powers the pay-as-you-go cost display via [ccusage](https://github.com/ccusage/ccusage))
 
 Install `jq` if you haven't:
@@ -98,7 +99,18 @@ Run the included setup script to automatically configure Antigravity:
 
 #### For GitHub Copilot CLI
 
-Since Copilot CLI does not have a native `statusLine` hook like Claude/Antigravity, you can use `statusline-copilot.sh` directly within your `tmux` or `SketchyBar` configuration. It natively reads the Copilot limits using `gh api`.
+Copilot CLI supports a custom `statusLine` command. Add the following to `~/.copilot/settings.json`, replacing the path with the location where you downloaded this repository:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "/path/to/agent-statusline/statusline-copilot.sh"
+  }
+}
+```
+
+The script reads the JSON supplied by Copilot CLI and fetches Premium request usage with `gh api`.
 
 ## Notes
 
@@ -204,7 +216,18 @@ chmod +x statusline-claude.sh statusline-agy.sh statusline-copilot.sh apply-clau
 
 #### GitHub Copilot CLI の場合
 
-Copilot CLI には Claude Code のような標準の `statusLine` 設定がありません。そのため、`statusline-copilot.sh` を `tmux` や `SketchyBar` の設定スクリプトから直接呼び出して使用してください。内部で `gh api` を使って月間制限を自動取得します。
+Copilot CLI はカスタム `statusLine` コマンドに対応しています。`~/.copilot/settings.json` に次の設定を追加し、パスをこのリポジトリを置いた場所に変更してください：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "/path/to/agent-statusline/statusline-copilot.sh"
+  }
+}
+```
+
+スクリプトは Copilot CLI から渡される JSON を読み取り、`gh api` で Premium リクエストの使用状況を取得します。
 
 ## 備考
 
