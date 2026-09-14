@@ -24,32 +24,64 @@ UPDATE_SCRIPT="/tmp/update_agy_quota.sh"
 
 cat << 'EOF' > "$UPDATE_SCRIPT"
 #!/bin/bash
-FORCE_UPDATE=$2
-if [ "$FORCE_UPDATE" != "force" ] && [ -f "$1" ]; then
-# Skip the refresh if it's been less than 5 minutes
-    if find "$1" -mmin -5 2>/dev/null | grep -q .; then exit 0; fi
-fi
-touch "$1" # Refresh the timestamp so concurrent runs bail out
+CACHE_FILE="$1"
+FORCE_UPDATE="$2"
+CSRF_TOKEN="$3"
+LOCK_DIR="${CACHE_FILE}.lock"
 
-# Fetch the quota directly from the local Antigravity server
-for PORT in $(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | grep -E "language_server|agy" | awk '{print $9}' | cut -d':' -f2 | sort -u); do
-    res=$(curl -s -k -m 2 -X POST -H "Content-Type: application/json" -d '{}' "https://127.0.0.1:${PORT}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary" 2>/dev/null)
-    if echo "$res" | grep -q "remainingFraction"; then
-        echo "$res" > "${1}.tmp"
-        mv "${1}.tmp" "$1"
+# Skip refresh if cache is fresh (< 5 min) and not forced
+if [ "$FORCE_UPDATE" != "force" ] && [ -s "$CACHE_FILE" ]; then
+    if find "$CACHE_FILE" -mmin -5 2>/dev/null | grep -q .; then
         exit 0
     fi
-done
+fi
+
+# Concurrency lock
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    if [ "$(find "$LOCK_DIR" -mmin +2 2>/dev/null | wc -l)" -gt 0 ]; then
+        rm -rf "$LOCK_DIR"
+        mkdir "$LOCK_DIR" 2>/dev/null || exit 0
+    else
+        exit 0
+    fi
+fi
+trap 'rm -rf "$LOCK_DIR"' EXIT
+
+# Method 1: Fast direct curl to language server if CSRF token is available
+if [ -n "$CSRF_TOKEN" ]; then
+    for PORT in $(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | grep -E "language_server|agy" | awk '{print $9}' | cut -d':' -f2 | sort -u); do
+        res=$(curl -s -k -m 2 -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-codeium-csrf-token: ${CSRF_TOKEN}" \
+            -d '{}' "https://127.0.0.1:${PORT}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary" 2>/dev/null)
+        if echo "$res" | grep -q "remainingFraction"; then
+            echo "$res" > "${CACHE_FILE}.tmp"
+            mv "${CACHE_FILE}.tmp" "$CACHE_FILE"
+            exit 0
+        fi
+    done
+fi
+
+# Method 2: Official CLI fallback (works even without CSRF token in env)
+AGY_BIN="${ANTIGRAVITY_AGENTAPI_EXE:-$(which agy 2>/dev/null || echo "$HOME/.local/bin/agy")}"
+if [ -x "$AGY_BIN" ]; then
+    res=$("$AGY_BIN" -p "/usage" --output-format json 2>/dev/null)
+    if echo "$res" | grep -q "remaining_fraction"; then
+        echo "$res" > "${CACHE_FILE}.tmp"
+        mv "${CACHE_FILE}.tmp" "$CACHE_FILE"
+        exit 0
+    fi
+fi
 EOF
 chmod +x "$UPDATE_SCRIPT"
 
 LAST_CTX=$(cat "$CTX_FILE" 2>/dev/null || echo "")
+UPDATE_MODE="normal"
 if [ -n "$used_pct" ] && [ "$used_pct" != "$LAST_CTX" ]; then
 	echo "$used_pct" > "$CTX_FILE"
-	"$UPDATE_SCRIPT" "$CACHE_FILE" force >/dev/null 2>&1 &
-else
-	"$UPDATE_SCRIPT" "$CACHE_FILE" normal >/dev/null 2>&1 &
+	UPDATE_MODE="force"
 fi
+"$UPDATE_SCRIPT" "$CACHE_FILE" "$UPDATE_MODE" "${ANTIGRAVITY_CSRF_TOKEN:-}" >/dev/null 2>&1 &
 
 # ---------- ANSI colors ----------
 GREEN=$'\e[38;2;51;165;165m'
@@ -197,19 +229,28 @@ A_7D_PCT=""
 
 if [ -s "$CACHE_FILE" ]; then
 	eval "$(jq -r --arg p5 "$PRIMARY_5H_ID" --arg p7 "$PRIMARY_7D_ID" --arg a5 "$ALT_5H_ID" --arg a7 "$ALT_7D_ID" '
-	  .response.groups[].buckets[]? |
-	  if .bucketId == $p5 then
-	    "P_5H_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end) + "\n" +
-	    "P_5H_RESET=" + (if .resetTime then (.resetTime | fromdateiso8601 | tostring) else "0" end)
-	  elif .bucketId == $p7 then
-	    "P_7D_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end) + "\n" +
-	    "P_7D_RESET=" + (if .resetTime then (.resetTime | fromdateiso8601 | tostring) else "0" end)
-	  elif .bucketId == $a5 then
-	    "A_5H_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end)
-	  elif .bucketId == $a7 then
-	    "A_7D_PCT=" + (if .remainingFraction != null then ((1 - .remainingFraction) * 100 | tostring) else "0" end)
+	  (if .command?.data?.groups then .command.data.groups[].buckets[]? else .response?.groups?[].buckets[]? end) |
+	  ( .bucketId // .id ) as $bid |
+	  ( if .remainingFraction != null then .remainingFraction elif .remaining_fraction != null then .remaining_fraction else null end ) as $rem |
+	  ( .resetTime // .reset_time ) as $reset |
+	  if $bid == $p5 then
+	    "P_5H_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end) + "\n" +
+	    "P_5H_RESET=" + (if $reset then ($reset | fromdateiso8601 | tostring) else "0" end)
+	  elif $bid == $p7 then
+	    "P_7D_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end) + "\n" +
+	    "P_7D_RESET=" + (if $reset then ($reset | fromdateiso8601 | tostring) else "0" end)
+	  elif $bid == $a5 then
+	    "A_5H_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end)
+	  elif $bid == $a7 then
+	    "A_7D_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end)
 	  else empty end
 	' "$CACHE_FILE" 2>/dev/null)"
+	# If cached reset time is already in the past, trigger background refresh
+	_now_epoch=$(date +%s)
+	if { [ -n "$P_5H_RESET" ] && [ "$P_5H_RESET" != "0" ] && [ "$P_5H_RESET" -lt "$_now_epoch" ]; } || \
+	   { [ -n "$P_7D_RESET" ] && [ "$P_7D_RESET" != "0" ] && [ "$P_7D_RESET" -lt "$_now_epoch" ]; }; then
+		"$UPDATE_SCRIPT" "$CACHE_FILE" force "${ANTIGRAVITY_CSRF_TOKEN:-}" >/dev/null 2>&1 &
+	fi
 fi
 
 fmt_pct() {
