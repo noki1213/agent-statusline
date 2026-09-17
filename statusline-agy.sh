@@ -17,71 +17,91 @@ eval "$(echo "$input" | jq -r '
 	"subagents=" + (if .subagents | type == "array" then (.subagents | length) else 0 end | tostring)
 ' 2>/dev/null)"
 
-# ---------- Cache refresh (async) ----------
+# ---------- Quota cache refresh (fully detached async) ----------
 CACHE_FILE="/tmp/agy_quota_cache.json"
-CTX_FILE="/tmp/agy_last_ctx.txt"
-UPDATE_SCRIPT="/tmp/update_agy_quota.sh"
-
-cat << 'EOF' > "$UPDATE_SCRIPT"
-#!/bin/bash
-CACHE_FILE="$1"
-FORCE_UPDATE="$2"
-CSRF_TOKEN="$3"
 LOCK_DIR="${CACHE_FILE}.lock"
+CACHE_TTL=60 # seconds
 
-# Skip refresh if cache is fresh (< 5 min) and not forced
-if [ "$FORCE_UPDATE" != "force" ] && [ -s "$CACHE_FILE" ]; then
-    if find "$CACHE_FILE" -mmin -5 2>/dev/null | grep -q .; then
-        exit 0
-    fi
-fi
+refresh_quota_in_background() {
+	local now
+	now=$(date +%s)
+	local cache_mtime=0
+	if [ -f "$CACHE_FILE" ]; then
+		cache_mtime=$(stat -f %m "$CACHE_FILE" 2>/dev/null || stat -c %Y "$CACHE_FILE" 2>/dev/null || echo 0)
+	fi
+	local cache_age=$(( now - cache_mtime ))
 
-# Concurrency lock
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    if [ "$(find "$LOCK_DIR" -mmin +2 2>/dev/null | wc -l)" -gt 0 ]; then
-        rm -rf "$LOCK_DIR"
-        mkdir "$LOCK_DIR" 2>/dev/null || exit 0
-    else
-        exit 0
-    fi
-fi
-trap 'rm -rf "$LOCK_DIR"' EXIT
+	local needs_refresh=false
+	if [ ! -s "$CACHE_FILE" ] || [ "$cache_age" -ge "$CACHE_TTL" ]; then
+		needs_refresh=true
+	fi
 
-# Method 1: Fast direct curl to language server if CSRF token is available
-if [ -n "$CSRF_TOKEN" ]; then
-    for PORT in $(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | grep -E "language_server|agy" | awk '{print $9}' | cut -d':' -f2 | sort -u); do
-        res=$(curl -s -k -m 2 -X POST \
-            -H "Content-Type: application/json" \
-            -H "x-codeium-csrf-token: ${CSRF_TOKEN}" \
-            -d '{}' "https://127.0.0.1:${PORT}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary" 2>/dev/null)
-        if echo "$res" | grep -q "remainingFraction"; then
-            echo "$res" > "${CACHE_FILE}.tmp"
-            mv "${CACHE_FILE}.tmp" "$CACHE_FILE"
-            exit 0
-        fi
-    done
-fi
+	# Check if cached reset times have expired
+	if ! $needs_refresh && [ -s "$CACHE_FILE" ]; then
+		local reset_check
+		reset_check=$(jq -r '
+			(if .command?.data?.groups then .command.data.groups[].buckets[]? else .response?.groups?[].buckets[]? end) |
+			(.resetTime // .reset_time // "") |
+			if . != "" then (. | fromdateiso8601 | tostring) else empty end
+		' "$CACHE_FILE" 2>/dev/null)
+		for r_epoch in $reset_check; do
+			if [ -n "$r_epoch" ] && [ "$r_epoch" != "0" ] && [ "$r_epoch" -lt "$now" ]; then
+				needs_refresh=true
+				break
+			fi
+		done
+	fi
 
-# Method 2: Official CLI fallback (works even without CSRF token in env)
-AGY_BIN="${ANTIGRAVITY_AGENTAPI_EXE:-$(which agy 2>/dev/null || echo "$HOME/.local/bin/agy")}"
-if [ -x "$AGY_BIN" ]; then
-    res=$("$AGY_BIN" -p "/usage" --output-format json 2>/dev/null)
-    if echo "$res" | grep -q "remaining_fraction"; then
-        echo "$res" > "${CACHE_FILE}.tmp"
-        mv "${CACHE_FILE}.tmp" "$CACHE_FILE"
-        exit 0
-    fi
-fi
-EOF
-chmod +x "$UPDATE_SCRIPT"
+	if $needs_refresh; then
+		# Touch cache immediately to prevent concurrent invocations from spawning duplicate workers
+		touch "$CACHE_FILE" 2>/dev/null
 
-LAST_CTX=$(cat "$CTX_FILE" 2>/dev/null || echo "")
-UPDATE_MODE="normal"
-if [ -n "$used_pct" ] && [ "$used_pct" != "$LAST_CTX" ]; then
-	echo "$used_pct" > "$CTX_FILE"
-	UPDATE_MODE="force"
-fi
-"$UPDATE_SCRIPT" "$CACHE_FILE" "$UPDATE_MODE" "${ANTIGRAVITY_CSRF_TOKEN:-}" >/dev/null 2>&1 &
+		(
+			# Double-check concurrency lock
+			if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+				if [ "$(find "$LOCK_DIR" -mmin +2 2>/dev/null | wc -l)" -gt 0 ]; then
+					rm -rf "$LOCK_DIR"
+					mkdir "$LOCK_DIR" 2>/dev/null || exit 0
+				else
+					exit 0
+				fi
+			fi
+			trap 'rm -rf "$LOCK_DIR"' EXIT
+
+			local csrf="${ANTIGRAVITY_CSRF_TOKEN:-}"
+			# Method 1: Fast direct curl to language server if CSRF token is available
+			if [ -n "$csrf" ]; then
+				for PORT in $(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | grep -E "language_server|agy" | awk '{print $9}' | cut -d':' -f2 | sort -u); do
+					local res
+					res=$(curl -s -k -m 2 -X POST \
+						-H "Content-Type: application/json" \
+						-H "x-codeium-csrf-token: ${csrf}" \
+						-d '{}' "https://127.0.0.1:${PORT}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary" 2>/dev/null)
+					if echo "$res" | grep -q "remainingFraction"; then
+						echo "$res" > "${CACHE_FILE}.tmp.$$"
+						mv -f "${CACHE_FILE}.tmp.$$" "$CACHE_FILE"
+						exit 0
+					fi
+				done
+			fi
+
+			# Method 2: Official CLI fallback
+			local agy_bin="${ANTIGRAVITY_AGENTAPI_EXE:-$(which agy 2>/dev/null || echo "$HOME/.local/bin/agy")}"
+			if [ -x "$agy_bin" ]; then
+				local res
+				res=$("$agy_bin" -p "/usage" --output-format json 2>/dev/null)
+				if echo "$res" | grep -q "remaining_fraction"; then
+					echo "$res" > "${CACHE_FILE}.tmp.$$"
+					mv -f "${CACHE_FILE}.tmp.$$" "$CACHE_FILE"
+					exit 0
+				fi
+			fi
+		) </dev/null >/dev/null 2>&1 &
+		disown 2>/dev/null || true
+	fi
+}
+
+refresh_quota_in_background
 
 # ---------- ANSI colors ----------
 GREEN=$'\e[38;2;51;165;165m'
@@ -245,12 +265,6 @@ if [ -s "$CACHE_FILE" ]; then
 	    "A_7D_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end)
 	  else empty end
 	' "$CACHE_FILE" 2>/dev/null)"
-	# If cached reset time is already in the past, trigger background refresh
-	_now_epoch=$(date +%s)
-	if { [ -n "$P_5H_RESET" ] && [ "$P_5H_RESET" != "0" ] && [ "$P_5H_RESET" -lt "$_now_epoch" ]; } || \
-	   { [ -n "$P_7D_RESET" ] && [ "$P_7D_RESET" != "0" ] && [ "$P_7D_RESET" -lt "$_now_epoch" ]; }; then
-		"$UPDATE_SCRIPT" "$CACHE_FILE" force "${ANTIGRAVITY_CSRF_TOKEN:-}" >/dev/null 2>&1 &
-	fi
 fi
 
 fmt_pct() {
@@ -340,7 +354,10 @@ line1="󰉋 ${dir_name}"
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
 	GH_VIS_SCRIPT="${GH_VISIBILITY_SCRIPT:-gh-visibility.sh}"
-	vis=$("${GH_VIS_SCRIPT}" "$git_toplevel" 2>/dev/null || echo "")
+	vis=""
+	if command -v "$GH_VIS_SCRIPT" >/dev/null 2>&1 || [ -x "$GH_VIS_SCRIPT" ]; then
+		vis=$("${GH_VIS_SCRIPT}" "$git_toplevel" 2>/dev/null || echo "")
+	fi
 	push_mark=""
 	if ! $git_no_remote; then
 		[ "$git_unpushed" -gt 0 ] && push_mark="${push_mark} ↑${git_unpushed}"
