@@ -31,32 +31,15 @@ refresh_quota_in_background() {
 	fi
 	local cache_age=$(( now - cache_mtime ))
 
-	local needs_refresh=false
-	if [ ! -s "$CACHE_FILE" ] || [ "$cache_age" -ge "$CACHE_TTL" ]; then
-		needs_refresh=true
+	# If cache is valid and younger than TTL, do nothing
+	if [ -s "$CACHE_FILE" ] && [ "$cache_age" -lt "$CACHE_TTL" ]; then
+		return 0
 	fi
 
-	# Check if cached reset times have expired
-	if ! $needs_refresh && [ -s "$CACHE_FILE" ]; then
-		local reset_check
-		reset_check=$(jq -r '
-			(if .command?.data?.groups then .command.data.groups[].buckets[]? else .response?.groups?[].buckets[]? end) |
-			(.resetTime // .reset_time // "") |
-			if . != "" then (. | fromdateiso8601 | tostring) else empty end
-		' "$CACHE_FILE" 2>/dev/null)
-		for r_epoch in $reset_check; do
-			if [ -n "$r_epoch" ] && [ "$r_epoch" != "0" ] && [ "$r_epoch" -lt "$now" ]; then
-				needs_refresh=true
-				break
-			fi
-		done
-	fi
+	# Touch cache immediately to prevent concurrent invocations from spawning duplicate workers
+	touch "$CACHE_FILE" 2>/dev/null
 
-	if $needs_refresh; then
-		# Touch cache immediately to prevent concurrent invocations from spawning duplicate workers
-		touch "$CACHE_FILE" 2>/dev/null
-
-		(
+	(
 			# Double-check concurrency lock
 			if ! mkdir "$LOCK_DIR" 2>/dev/null; then
 				if [ "$(find "$LOCK_DIR" -mmin +2 2>/dev/null | wc -l)" -gt 0 ]; then
@@ -96,9 +79,8 @@ refresh_quota_in_background() {
 					exit 0
 				fi
 			fi
-		) </dev/null >/dev/null 2>&1 &
-		disown 2>/dev/null || true
-	fi
+	) </dev/null >/dev/null 2>&1 &
+	disown 2>/dev/null || true
 }
 
 refresh_quota_in_background
