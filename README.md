@@ -114,7 +114,7 @@ The script reads the JSON supplied by Copilot CLI and fetches Premium request us
 
 ## Notes
 
-- Rate limit info is fetched and cached locally to avoid excessive API calls.
+- Claude Code and Antigravity supply rate limit info on stdin, so those scripts make no network requests; Copilot usage is fetched with `gh api` and cached locally.
 - Credentials are read securely from the macOS keychain (or local CLI).
 
 ---
@@ -231,5 +231,5 @@ Copilot CLI はカスタム `statusLine` コマンドに対応しています。
 
 ## 備考
 
-- レートリミット情報は最小限のリクエストで取得され、API 呼び出しを抑えるために一定時間キャッシュされます。
+- Claude Code と Antigravity のレートリミット情報は標準入力の JSON から読み取るため、ネットワークアクセスは行いません。Copilot の使用状況は `gh api` で取得し、一定時間キャッシュします。
 - 認証情報やローカルパスは安全に管理（キーチェーンや `.env` を利用）される設計になっています。

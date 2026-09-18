@@ -1,5 +1,5 @@
 #!/bin/bash
-# Antigravity CLI status line script (smart cache + primary/secondary two-tier display)
+# Antigravity CLI status line script (primary/secondary two-tier quota display)
 
 # ---------- Load environment variables ----------
 if [ -f "$(dirname "$0")/.env" ]; then
@@ -16,74 +16,6 @@ eval "$(echo "$input" | jq -r '
 	"artifact_count=" + (.artifact_count // 0 | tostring),
 	"subagents=" + (if .subagents | type == "array" then (.subagents | length) else 0 end | tostring)
 ' 2>/dev/null)"
-
-# ---------- Quota cache refresh (fully detached async) ----------
-CACHE_FILE="/tmp/agy_quota_cache.json"
-LOCK_DIR="${CACHE_FILE}.lock"
-CACHE_TTL=60 # seconds
-
-refresh_quota_in_background() {
-	local now
-	now=$(date +%s)
-	local cache_mtime=0
-	if [ -f "$CACHE_FILE" ]; then
-		cache_mtime=$(stat -f %m "$CACHE_FILE" 2>/dev/null || stat -c %Y "$CACHE_FILE" 2>/dev/null || echo 0)
-	fi
-	local cache_age=$(( now - cache_mtime ))
-
-	# If cache is valid and younger than TTL, do nothing
-	if [ -s "$CACHE_FILE" ] && [ "$cache_age" -lt "$CACHE_TTL" ]; then
-		return 0
-	fi
-
-	# Touch cache immediately to prevent concurrent invocations from spawning duplicate workers
-	touch "$CACHE_FILE" 2>/dev/null
-
-	(
-			# Double-check concurrency lock
-			if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-				if [ "$(find "$LOCK_DIR" -mmin +2 2>/dev/null | wc -l)" -gt 0 ]; then
-					rm -rf "$LOCK_DIR"
-					mkdir "$LOCK_DIR" 2>/dev/null || exit 0
-				else
-					exit 0
-				fi
-			fi
-			trap 'rm -rf "$LOCK_DIR"' EXIT
-
-			local csrf="${ANTIGRAVITY_CSRF_TOKEN:-}"
-			# Method 1: Fast direct curl to language server if CSRF token is available
-			if [ -n "$csrf" ]; then
-				for PORT in $(lsof -iTCP -sTCP:LISTEN -P -n 2>/dev/null | grep -E "language_server|agy" | awk '{print $9}' | cut -d':' -f2 | sort -u); do
-					local res
-					res=$(curl -s -k -m 2 -X POST \
-						-H "Content-Type: application/json" \
-						-H "x-codeium-csrf-token: ${csrf}" \
-						-d '{}' "https://127.0.0.1:${PORT}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary" 2>/dev/null)
-					if echo "$res" | grep -q "remainingFraction"; then
-						echo "$res" > "${CACHE_FILE}.tmp.$$"
-						mv -f "${CACHE_FILE}.tmp.$$" "$CACHE_FILE"
-						exit 0
-					fi
-				done
-			fi
-
-			# Method 2: Official CLI fallback
-			local agy_bin="${ANTIGRAVITY_AGENTAPI_EXE:-$(which agy 2>/dev/null || echo "$HOME/.local/bin/agy")}"
-			if [ -x "$agy_bin" ]; then
-				local res
-				res=$("$agy_bin" -p "/usage" --output-format json 2>/dev/null)
-				if echo "$res" | grep -q "remaining_fraction"; then
-					echo "$res" > "${CACHE_FILE}.tmp.$$"
-					mv -f "${CACHE_FILE}.tmp.$$" "$CACHE_FILE"
-					exit 0
-				fi
-			fi
-	) </dev/null >/dev/null 2>&1 &
-	disown 2>/dev/null || true
-}
-
-refresh_quota_in_background
 
 # ---------- ANSI colors ----------
 GREEN=$'\e[38;2;51;165;165m'
@@ -229,25 +161,18 @@ P_7D_RESET="0"
 A_5H_PCT=""
 A_7D_PCT=""
 
-if [ -s "$CACHE_FILE" ]; then
-	eval "$(jq -r --arg p5 "$PRIMARY_5H_ID" --arg p7 "$PRIMARY_7D_ID" --arg a5 "$ALT_5H_ID" --arg a7 "$ALT_7D_ID" '
-	  (if .command?.data?.groups then .command.data.groups[].buckets[]? else .response?.groups?[].buckets[]? end) |
-	  ( .bucketId // .id ) as $bid |
-	  ( if .remainingFraction != null then .remainingFraction elif .remaining_fraction != null then .remaining_fraction else null end ) as $rem |
-	  ( .resetTime // .reset_time ) as $reset |
-	  if $bid == $p5 then
-	    "P_5H_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end) + "\n" +
-	    "P_5H_RESET=" + (if $reset then ($reset | fromdateiso8601 | tostring) else "0" end)
-	  elif $bid == $p7 then
-	    "P_7D_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end) + "\n" +
-	    "P_7D_RESET=" + (if $reset then ($reset | fromdateiso8601 | tostring) else "0" end)
-	  elif $bid == $a5 then
-	    "A_5H_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end)
-	  elif $bid == $a7 then
-	    "A_7D_PCT=" + (if $rem != null then ((1 - $rem) * 100 | tostring) else "0" end)
-	  else empty end
-	' "$CACHE_FILE" 2>/dev/null)"
-fi
+# Quota buckets are delivered on stdin by the CLI, so no background fetch is needed
+eval "$(echo "$input" | jq -r --arg p5 "$PRIMARY_5H_ID" --arg p7 "$PRIMARY_7D_ID" --arg a5 "$ALT_5H_ID" --arg a7 "$ALT_7D_ID" '
+  def pct: if .remaining_fraction != null then ((1 - .remaining_fraction) * 100 | tostring) else "" end;
+  def reset: if .reset_time then (.reset_time | fromdateiso8601 | tostring) else "0" end;
+  (.quota // {}) as $q |
+  "P_5H_PCT=" + ($q[$p5] // {} | pct) + "\n" +
+  "P_5H_RESET=" + ($q[$p5] // {} | reset) + "\n" +
+  "P_7D_PCT=" + ($q[$p7] // {} | pct) + "\n" +
+  "P_7D_RESET=" + ($q[$p7] // {} | reset) + "\n" +
+  "A_5H_PCT=" + ($q[$a5] // {} | pct) + "\n" +
+  "A_7D_PCT=" + ($q[$a7] // {} | pct)
+' 2>/dev/null)"
 
 fmt_pct() {
 	local p="$1"
