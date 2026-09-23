@@ -159,7 +159,7 @@ if [ -f "$CACHE_FILE" ]; then
     entitlement=$(jq -r '.quota_snapshots.premium_interactions.entitlement // empty' "$CACHE_FILE")
     
     if [ -n "$premium_rem_pct" ]; then
-        # NOTE: here we back-calculate "used" percentage, not "remaining"!
+        # This calculates the "used" percentage, not "remaining".
         PREMIUM_USED_PCT=$(awk "BEGIN {print 100 - $premium_rem_pct}")
     fi
     if [ -n "$entitlement" ]; then
