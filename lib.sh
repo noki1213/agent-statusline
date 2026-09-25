@@ -65,11 +65,12 @@ ideal_bar_pos() {
 	now=$(date +%s)
 	local start=$(( reset_epoch - window_sec ))
 	local elapsed=$(( now - start ))
-	[ "$elapsed" -le 0 ] && echo "1" && return
+	[ "$elapsed" -le 0 ] && echo "" && return
 	local pos
 	pos=$(awk "BEGIN{printf \"%d\", int($elapsed / $window_sec * 10 + 0.5)}" 2>/dev/null || echo "")
 	[ "$pos" -gt 10 ] 2>/dev/null && pos=10
-	[ "$pos" -lt 1 ] 2>/dev/null && pos=1
+	# Less than half a cell elapsed: no marker, so it cannot hide the first used cell
+	[ "$pos" -lt 1 ] 2>/dev/null && pos=""
 	echo "$pos"
 }
 
