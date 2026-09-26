@@ -41,11 +41,19 @@ progress_bar() {
 	filled=$(awk "BEGIN{printf \"%d\", int($pct / 10 + 0.5)}" 2>/dev/null || echo 0)
 	[ "$filled" -gt 10 ] 2>/dev/null && filled=10
 	[ "$filled" -lt 0 ] 2>/dev/null && filled=0
+	# The caller draws the bar in color_for_pct's color; a marker on a filled cell
+	# is drawn white on that color as background, so the used cell stays visible
+	local fg bg
+	fg=$(color_for_pct "$pct")
+	bg="${fg/38;/48;}"
 	local bar=""
 	for i in $(seq 1 10); do
 		if [ -n "$ideal" ] && [ "$i" -eq "$ideal" ]; then
-			# Overwrite the ideal-position cell with ┃
-			bar="${bar}┃"
+			if [ "$i" -le "$filled" ]; then
+				bar="${bar}${bg}${WHITE}┃"$'\e[49m'"${fg}"
+			else
+				bar="${bar}┃"
+			fi
 		elif [ "$i" -le "$filled" ]; then
 			bar="${bar}█"
 		else
@@ -66,11 +74,11 @@ ideal_bar_pos() {
 	local start=$(( reset_epoch - window_sec ))
 	local elapsed=$(( now - start ))
 	[ "$elapsed" -le 0 ] && echo "" && return
+	# The marker goes in the cell that contains the elapsed fraction (e.g. 13% -> cell 2)
 	local pos
-	pos=$(awk "BEGIN{printf \"%d\", int($elapsed / $window_sec * 10 + 0.5)}" 2>/dev/null || echo "")
+	pos=$(awk "BEGIN{p=int($elapsed * 10 / $window_sec); if (p * $window_sec < $elapsed * 10) p++; printf \"%d\", p}" 2>/dev/null || echo "")
 	[ "$pos" -gt 10 ] 2>/dev/null && pos=10
-	# Less than half a cell elapsed: no marker, so it cannot hide the first used cell
-	[ "$pos" -lt 1 ] 2>/dev/null && pos=""
+	[ "$pos" -lt 1 ] 2>/dev/null && pos=1
 	echo "$pos"
 }
 
