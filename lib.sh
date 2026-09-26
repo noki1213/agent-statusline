@@ -11,6 +11,7 @@ CYAN=$'\e[38;2;74;174;200m'
 MAGENTA=$'\e[38;2;184;127;204m'
 WHITE=$'\e[38;2;196;196;196m'
 GRAY=$'\e[38;2;74;88;92m'
+BLACK=$'\e[38;2;0;0;0m'
 RESET=$'\e[0m'
 DIM=$'\e[2m'
 
@@ -42,7 +43,7 @@ progress_bar() {
 	[ "$filled" -gt 10 ] 2>/dev/null && filled=10
 	[ "$filled" -lt 0 ] 2>/dev/null && filled=0
 	# The caller draws the bar in color_for_pct's color; a marker on a filled cell
-	# is drawn white on that color as background, so the used cell stays visible
+	# is drawn black (the terminal background) on that color, so the used cell stays visible
 	local fg bg
 	fg=$(color_for_pct "$pct")
 	bg="${fg/38;/48;}"
@@ -50,7 +51,7 @@ progress_bar() {
 	for i in $(seq 1 10); do
 		if [ -n "$ideal" ] && [ "$i" -eq "$ideal" ]; then
 			if [ "$i" -le "$filled" ]; then
-				bar="${bar}${bg}${WHITE}┃${RESET}${fg}"
+				bar="${bar}${bg}${BLACK}┃${RESET}${fg}"
 			else
 				bar="${bar}┃"
 			fi
