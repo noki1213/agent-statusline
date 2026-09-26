@@ -50,7 +50,7 @@ progress_bar() {
 	for i in $(seq 1 10); do
 		if [ -n "$ideal" ] && [ "$i" -eq "$ideal" ]; then
 			if [ "$i" -le "$filled" ]; then
-				bar="${bar}${bg}${WHITE}┃"$'\e[49m'"${fg}"
+				bar="${bar}${bg}${WHITE}┃${RESET}${fg}"
 			else
 				bar="${bar}┃"
 			fi
