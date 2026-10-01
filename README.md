@@ -50,8 +50,11 @@ The progress bar includes a vertical bar marker (`┃`) that indicates your "ide
 **Plan status icon (Claude Code only)**
 Next to `CTX %`, a blue clock icon means you're still within your plan's rate limits. Once either the 5-hour or 7-day limit hits 100%, it switches to a red credit card icon along with the estimated dollar cost of usage since the limit was hit (via [ccusage](https://github.com/ccusage/ccusage)), indicating you're now drawing on pay-as-you-go usage credits.
 
-**Running subagents (Claude Code only)**
-The model and effort on line 3 belong to the main session. While subagents are running, each one is appended as `↳ Sonnet 5.5 low` (identical ones grouped as `×2`), read from the subagent's own transcript, so a subagent started with a different model shows the model it actually uses.
+**Subagent rows (Claude Code only, `statusline-claude-subagent.sh`)**
+Each subagent row in the agent panel below the prompt shows its type, description, the model and effort it actually runs on, and the elapsed time while it runs. The description is shortened to fit the width. A subagent that inherits the session's effort shows the effort it runs with.
+```
+● general-purpose  Statusline display test  Sonnet 5.5 low  9s
+```
 
 ## Requirements
 
@@ -79,7 +82,7 @@ Open your terminal, navigate to the extracted folder, and make the scripts execu
 
 ```bash
 cd path/to/agent-statusline
-chmod +x statusline-claude.sh statusline-agy.sh statusline-copilot.sh apply-claude-settings.sh apply-agy-settings.sh
+chmod +x statusline-claude.sh statusline-claude-subagent.sh statusline-agy.sh statusline-copilot.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
 ### 2. Apply Settings to Agents
@@ -171,8 +174,11 @@ Copilot │ CTX 0%
 **プラン状態アイコン（Claude Code のみ）**
 `CTX %`の右にある青い時計アイコンは、プランのレートリミット内であることを示します。5時間または7日間のいずれかが100%に到達すると、赤いクレジットカードのアイコンに切り替わり、上限に達してから使った分のおおよその金額（[ccusage](https://github.com/ccusage/ccusage) で算出）も一緒に表示され、従量課金のcredits消費中であることを示します。
 
-**実行中のサブエージェント（Claude Code のみ）**
-3行目のモデルと effort はメインのセッションのものです。サブエージェントが動いている間は、その記録から読んだ実際のモデルと effort を `↳ Sonnet 5.5 low` の形で後ろに並べます（同じものは `×2` のようにまとめます）。
+**サブエージェントの行（Claude Code のみ、`statusline-claude-subagent.sh`）**
+入力欄の下のサブエージェント一覧の各行に、種類・説明・実際に使っているモデルと effort・動いている間の経過時間を出します。説明は幅に合わせて短くします。effort を指定せずメインのセッションから引き継いだサブエージェントにも、実際の effort を出します。
+```
+● general-purpose  Statusline display test  Sonnet 5.5 low  9s
+```
 
 ## 必要なもの
 
@@ -199,7 +205,7 @@ brew install jq
 
 ```bash
 cd path/to/agent-statusline
-chmod +x statusline-claude.sh statusline-agy.sh statusline-copilot.sh apply-claude-settings.sh apply-agy-settings.sh
+chmod +x statusline-claude.sh statusline-claude-subagent.sh statusline-agy.sh statusline-copilot.sh apply-claude-settings.sh apply-agy-settings.sh
 ```
 
 ### 2. 各エージェントへの設定適用
