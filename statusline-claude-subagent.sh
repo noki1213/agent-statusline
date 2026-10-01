@@ -24,9 +24,11 @@ session_effort_read=false
 now_ms=$(($(date +%s) * 1000))
 
 echo "$input" | jq -c '.columns as $c | .tasks[]? | . + {columns: $c}' | while read -r task; do
+	id=$(echo "$task" | jq -r '.id')
+	# The agent type (general-purpose, Explore, ...) is only in the subagent's meta file
+	agent_type=$(jq -r '.agentType // ""' "$subagent_dir/agent-${id}.meta.json" 2>/dev/null)
 	effort=$(echo "$task" | jq -r '.effort // "" | tostring')
 	if [ -z "$effort" ]; then
-		id=$(echo "$task" | jq -r '.id')
 		effort=$(last_effort "$subagent_dir/agent-${id}.jsonl")
 		if [ -z "$effort" ]; then
 			if ! $session_effort_read; then
@@ -38,7 +40,7 @@ echo "$input" | jq -c '.columns as $c | .tasks[]? | . + {columns: $c}' | while r
 	fi
 
 	echo "$task" | jq -c \
-		--arg effort "$effort" --argjson now "$now_ms" \
+		--arg effort "$effort" --arg agent_type "$agent_type" --argjson now "$now_ms" \
 		--arg green "$GREEN" --arg red "$RED" --arg gray "$GRAY" \
 		--arg cyan "$CYAN" --arg reset "$RESET" '
 		# Display width: wide (CJK and similar) characters take two columns
@@ -62,7 +64,7 @@ echo "$input" | jq -c '.columns as $c | .tasks[]? | . + {columns: $c}' | while r
 
 		(.status // "") as $status
 		| (if $status == "running" then $green elif $status == "failed" or $status == "killed" then $red else $gray end) as $color
-		| (.name // .type // "agent") as $kind
+		| (.name // (if $agent_type == "" then null else $agent_type end) // .type // "agent") as $kind
 		| (.label // .description // "" | gsub("[\r\n]+"; " ")) as $desc
 		| ([(.model // "" | if . == "" then empty else model_name end), (if $effort == "" then empty else $effort end)] | join(" ")) as $model
 		| (if $status == "running" and (.startTime // 0) > 0 then elapsed($now - .startTime) else "" end) as $time
