@@ -18,6 +18,7 @@ eval "$(echo "$input" | jq -r '
 	"used_pct=" + (.context_window.used_percentage // 0 | tostring),
 	"ctx_size=" + (.context_window.context_window_size // 0 | tostring),
 	"cwd=" + (.cwd // "" | @sh),
+	"transcript_path=" + (.transcript_path // "" | @sh),
 	"cc_version=" + (.version // "0.0.0" | @sh),
 	"five_hour_pct=" + (.rate_limits.five_hour.used_percentage // "" | tostring),
 	"five_hour_resets_at=" + (.rate_limits.five_hour.resets_at // 0 | tostring),
@@ -243,7 +244,42 @@ else
 	# Within the plan -> normal mark (fixed blue), no cost shown
 	credits_part="${SEP}${BLUE}${PLAN_OK_ICON}${RESET}"
 fi
-line3="${model_name}${effort_part}${SEP}CTX ${ctx_pct_int}%${credits_part}"
+# Subagents: stdin only describes the main session, so read each running
+# subagent's own transcript for the model and effort it actually uses.
+# A subagent counts as running while its transcript was written in the last
+# SUBAGENT_ACTIVE_SECS seconds and its last turn has not ended.
+SUBAGENT_ACTIVE_SECS=60
+subagent_part=""
+subagent_dir="${transcript_path%.jsonl}/subagents"
+if [ -n "$transcript_path" ] && [ -d "$subagent_dir" ]; then
+	now=$(date +%s)
+	subagent_labels=""
+	for f in "$subagent_dir"/agent-*.jsonl; do
+		[ -f "$f" ] || continue
+		mtime=$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null || echo 0)
+		[ $((now - mtime)) -le "$SUBAGENT_ACTIVE_SECS" ] || continue
+		label=$(tail -n 40 "$f" | jq -rs '
+			(last // {}) as $l
+			| if $l.type == "assistant" and $l.message.stop_reason == "end_turn" then empty
+			  else ([.[] | select(.type == "assistant" and (.message.model // "") != "")] | last) as $a
+			  | select($a != null)
+			  | ($a.message.model
+				| sub("^claude-"; "") | sub("-[0-9]{8}$"; "") | split("-")
+				| (.[0][:1] | ascii_upcase) + .[0][1:] + " " + (.[1:] | join(".")))
+				+ (if ($a.effort // "") != "" then " " + $a.effort else "" end)
+			  end' 2>/dev/null)
+		[ -n "$label" ] && subagent_labels+="${label}"$'\n'
+	done
+	if [ -n "$subagent_labels" ]; then
+		# Group identical model/effort pairs: "Sonnet 5.5 low ×2"
+		while read -r count label; do
+			[ -n "$label" ] || continue
+			[ "$count" -gt 1 ] && label+=" ×${count}"
+			subagent_part+="${SEP}${CYAN}↳ ${label}${RESET}"
+		done < <(printf '%s' "$subagent_labels" | sort | uniq -c)
+	fi
+fi
+line3="${model_name}${effort_part}${SEP}CTX ${ctx_pct_int}%${credits_part}${subagent_part}"
 
 # ---------- Line 4 (5-hour rate limit) ----------
 line4=""

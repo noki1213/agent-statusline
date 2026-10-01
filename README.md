@@ -50,6 +50,9 @@ The progress bar includes a vertical bar marker (`┃`) that indicates your "ide
 **Plan status icon (Claude Code only)**
 Next to `CTX %`, a blue clock icon means you're still within your plan's rate limits. Once either the 5-hour or 7-day limit hits 100%, it switches to a red credit card icon along with the estimated dollar cost of usage since the limit was hit (via [ccusage](https://github.com/ccusage/ccusage)), indicating you're now drawing on pay-as-you-go usage credits.
 
+**Running subagents (Claude Code only)**
+The model and effort on line 3 belong to the main session. While subagents are running, each one is appended as `↳ Sonnet 5.5 low` (identical ones grouped as `×2`), read from the subagent's own transcript, so a subagent started with a different model shows the model it actually uses.
+
 ## Requirements
 
 - macOS
@@ -167,6 +170,9 @@ Copilot │ CTX 0%
 
 **プラン状態アイコン（Claude Code のみ）**
 `CTX %`の右にある青い時計アイコンは、プランのレートリミット内であることを示します。5時間または7日間のいずれかが100%に到達すると、赤いクレジットカードのアイコンに切り替わり、上限に達してから使った分のおおよその金額（[ccusage](https://github.com/ccusage/ccusage) で算出）も一緒に表示され、従量課金のcredits消費中であることを示します。
+
+**実行中のサブエージェント（Claude Code のみ）**
+3行目のモデルと effort はメインのセッションのものです。サブエージェントが動いている間は、その記録から読んだ実際のモデルと effort を `↳ Sonnet 5.5 low` の形で後ろに並べます（同じものは `×2` のようにまとめます）。
 
 ## 必要なもの
 
