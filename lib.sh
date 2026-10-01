@@ -114,3 +114,20 @@ reset_datetime() {
 	fi
 	printf '(%s)' "$dt"
 }
+
+# ---------- Repo name ----------
+# Print the repo name for a directory. In a linked worktree, use the main
+# worktree's folder name rather than the worktree's own folder name.
+git_repo_name() {
+	local dir="$1" top gitdir common main
+	{
+		read -r top
+		read -r gitdir
+		read -r common
+	} < <(git -C "$dir" --no-optional-locks rev-parse --show-toplevel --absolute-git-dir --path-format=absolute --git-common-dir 2>/dev/null)
+	if [ -n "$gitdir" ] && [ "$gitdir" != "$common" ]; then
+		main=$(git -C "$dir" --no-optional-locks worktree list --porcelain 2>/dev/null | sed -n '1s/^worktree //p')
+		[ -n "$main" ] && top="$main"
+	fi
+	basename "$top"
+}

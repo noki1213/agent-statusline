@@ -52,7 +52,7 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 	git_branch=$(git -C "$cwd" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null || true)
 	if [ -n "$git_branch" ]; then
 		git_toplevel=$(git -C "$cwd" --no-optional-locks rev-parse --show-toplevel 2>/dev/null || true)
-		git_repo=$(basename "$git_toplevel")
+		git_repo=$(git_repo_name "$cwd")
 		has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
 
 		if [ "$has_remote" -gt 0 ]; then
