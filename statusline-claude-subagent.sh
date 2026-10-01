@@ -1,7 +1,7 @@
 #!/bin/bash
 # Claude Code subagent status line script (subagentStatusLine)
 # One row per subagent in the agent panel:
-#   ● <type>  <description>  <model> <effort>  <elapsed>
+#   <type>  <description>  <model> <effort>  <elapsed>
 # The description is shortened to fit the row width.
 
 input=$(cat)
@@ -61,17 +61,17 @@ echo "$input" | jq -c '.columns as $c | .tasks[]? | . + {columns: $c}' | while r
 			  else "\($s)s" end;
 
 		(.status // "") as $status
-		| (if $status == "running" then $green elif $status == "failed" or $status == "killed" then $red else $gray end) as $dot
+		| (if $status == "running" then $green elif $status == "failed" or $status == "killed" then $red else $gray end) as $color
 		| (.name // .type // "agent") as $kind
 		| (.label // .description // "" | gsub("[\r\n]+"; " ")) as $desc
 		| ([(.model // "" | if . == "" then empty else model_name end), (if $effort == "" then empty else $effort end)] | join(" ")) as $model
 		| (if $status == "running" and (.startTime // 0) > 0 then elapsed($now - .startTime) else "" end) as $time
 		| ([$model, $time] | map(select(. != "")) | join("  ")) as $tail
-		# "● " + kind + "  " + desc + "  " + tail
-		| ((.columns // 80) - 2 - ($kind | width) - 2 - (if $tail == "" then 0 else ($tail | width) + 2 end)) as $room
+		# kind (colored by status) + "  " + desc + "  " + tail
+		| ((.columns // 80) - ($kind | width) - 2 - (if $tail == "" then 0 else ($tail | width) + 2 end)) as $room
 		| ($desc | fit($room)) as $d
 		| {id: .id, content: (
-			$dot + "●" + $reset + " " + $kind
+			$color + $kind + $reset
 			+ (if $d == "" then "" else "  " + $d end)
 			+ (if $tail == "" then "" else "  " + $cyan + $tail + $reset end))}'
 done
