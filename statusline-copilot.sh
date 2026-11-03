@@ -158,7 +158,7 @@ if [ -n "$used_pct" ] && [ "$used_pct" != "null" ] && [ "$used_pct" != "0" ]; th
 	ctx_pct_int=$(printf "%.0f" "$used_pct" 2>/dev/null || echo 0)
 fi
 
-# Adjustable, e.g. hiding it when CTX is 0, but we match Claude's behavior here
+# CTX is shown even at 0%, matching the Claude Code status line
 line3="${model_name}${SEP}CTX ${ctx_pct_int}%"
 
 # ---------- Line 4 (Premium) ----------
