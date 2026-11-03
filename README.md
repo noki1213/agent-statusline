@@ -60,9 +60,8 @@ Each subagent row in the agent panel below the prompt shows its type, descriptio
 
 - macOS
 - `jq`
-- `curl`
 - `bash`
-- [`gh`](https://cli.github.com/) (authenticated with GitHub)
+- [`gh`](https://cli.github.com/), signed in with `gh auth login` (only for `statusline-copilot.sh`)
 - [`bun`](https://bun.sh) (optional, powers the pay-as-you-go cost display via [ccusage](https://github.com/ccusage/ccusage))
 
 Install `jq` if you haven't:
@@ -120,8 +119,9 @@ The script reads the JSON supplied by Copilot CLI and fetches Premium request us
 
 ## Notes
 
-- Claude Code and Antigravity supply rate limit info on stdin, so those scripts make no network requests; Copilot usage is fetched with `gh api` and cached locally.
-- Credentials are read securely from the macOS keychain (or local CLI).
+- Claude Code and Antigravity supply rate limit info on stdin, so those scripts do not call any usage API. Copilot usage is fetched with `gh api` and cached for 5 minutes in `~/.cache/copilot-statusline/`.
+- The scripts read no credentials themselves; `gh` uses its own sign-in.
+- `statusline-agy.sh` loads a `.env` file next to it when one exists, for local environment variables.
 
 ---
 
@@ -184,8 +184,8 @@ Copilot │ CTX 0%
 
 - macOS
 - `jq`
-- `curl`
 - `bash`
+- [`gh`](https://cli.github.com/)（`gh auth login` でサインイン済み。`statusline-copilot.sh` だけで使う）
 - [`bun`](https://bun.sh)（任意。従量課金時の金額表示（[ccusage](https://github.com/ccusage/ccusage)）に使用）
 
 `jq` のインストール（未インストールの場合）:
@@ -243,5 +243,6 @@ Copilot CLI はカスタム `statusLine` コマンドに対応しています。
 
 ## 備考
 
-- Claude Code と Antigravity のレートリミット情報は標準入力の JSON から読み取るため、ネットワークアクセスは行いません。Copilot の使用状況は `gh api` で取得し、一定時間キャッシュします。
-- 認証情報やローカルパスは安全に管理（キーチェーンや `.env` を利用）される設計になっています。
+- Claude Code と Antigravity のレートリミット情報は標準入力の JSON から読み取るため、使用量の API は呼びません。Copilot の使用状況は `gh api` で取得し、`~/.cache/copilot-statusline/` に5分間キャッシュします。
+- スクリプト自身は認証情報を読みません。`gh` は自分のサインイン情報を使います。
+- `statusline-agy.sh` は、同じフォルダに `.env` があれば読み込みます（手元の環境変数用）。
