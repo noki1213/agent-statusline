@@ -28,7 +28,7 @@ eval "$(echo "$input" | jq -r '
 # ---------- Current directory (full path, abbreviated with ~) ----------
 dir_name=""
 if [ -n "$cwd" ]; then
-	dir_name=$(echo "$cwd" | sed "s|^/Users/$(whoami)|~|")
+	dir_name=$(echo "$cwd" | sed "s|^$HOME|~|")
 fi
 
 # ---------- Git repo name and branch name ----------

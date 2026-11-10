@@ -38,7 +38,7 @@ progress_bar_small() {
 }
 
 cwd="$PWD"
-dir_name=$(echo "$cwd" | sed "s|^/Users/$(whoami)|~|")
+dir_name=$(echo "$cwd" | sed "s|^$HOME|~|")
 
 git_branch=""
 git_repo=""

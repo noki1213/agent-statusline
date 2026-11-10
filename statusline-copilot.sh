@@ -23,10 +23,10 @@ eval "$(echo "$input" | jq -r '
 
 dir_name=""
 if [ -n "$cwd" ]; then
-	dir_name=$(echo "$cwd" | sed "s|^/Users/$(whoami)|~|")
+	dir_name=$(echo "$cwd" | sed "s|^$HOME|~|")
 else
     # Fall back to the current directory if cwd can't be obtained
-    dir_name=$(pwd | sed "s|^/Users/$(whoami)|~|")
+    dir_name=$(pwd | sed "s|^$HOME|~|")
     cwd=$(pwd)
 fi
 
