@@ -123,6 +123,10 @@ The script reads the JSON supplied by Copilot CLI and fetches Premium request us
 - The scripts read no credentials themselves; `gh` uses its own sign-in.
 - `statusline-agy.sh` loads a `.env` file next to it when one exists, for local environment variables.
 
+## License
+
+MIT License. See [LICENSE](LICENSE).
+
 ---
 
 # 日本語ドキュメント
@@ -246,3 +250,7 @@ Copilot CLI はカスタム `statusLine` コマンドに対応しています。
 - Claude Code と Antigravity のレートリミット情報は標準入力の JSON から読み取るため、使用量の API は呼びません。Copilot の使用状況は `gh api` で取得し、`~/.cache/copilot-statusline/` に5分間キャッシュします。
 - スクリプト自身は認証情報を読みません。`gh` は自分のサインイン情報を使います。
 - `statusline-agy.sh` は、同じフォルダに `.env` があれば読み込みます（手元の環境変数用）。
+
+## ライセンス
+
+MIT License です。[LICENSE](LICENSE) を参照してください。
